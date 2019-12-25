@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>创建页面</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="css/Element-UI/index.css">
+    <link rel="stylesheet" type="text/css" href="css/iconfont.css">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+<div id="app" v-loading="loading" element-loading-text="拼命加载中" style="width: 750px;height: 590px;">
+    <el-scrollbar class="vm-con clearfix">
+        <el-form ref="form" v-bind:model="form" label-width="130px" v-bind:rules="rules">
+            <el-form-item label="名称：" prop="name">
+                <el-input v-model.trim="form.name"></el-input>
+            </el-form-item>
+            <el-form-item label="开始时间：" prop="date1">
+                <el-col v-bind:span="11">
+                    <el-date-picker v-model="form.date1" type="datetime" placeholder="选择开始时间" style="width: 100%;"
+                        default-time="12:00:00">
+                    </el-date-picker>
+                </el-col>
+            </el-form-item>
+            <el-form-item label="结束时间：" prop="date2">
+                <el-col v-bind:span="11">
+                    <el-date-picker v-model="form.date2" type="datetime" placeholder="选择结束时间" style="width: 100%;"
+                        default-time="12:00:00">
+                    </el-date-picker>
+                </el-col>
+            </el-form-item>
+            <el-form-item label="视频会议封面：">
+                <el-col v-bind:span="11">
+                    <div class="demo-image__placeholder">
+                        <div class="block head-upload">
+                            <!--图片，判断下给一个默认封面图片-->
+                            <el-image
+                                v-bind:src="form.photo=='' ? 'http://oaokcs.cnki.net/Live/Content/List/images/crouseImg.jpg':form.photo">
+                            </el-image>
+                            <span class="hu-txt" id="grouplogo" v-on:click="uploadPhoto()">
+                                <svg aria-hidden="true" class="icon">
+                                    <use xlink:href="#icon-upHeadImg"></use>
+                                </svg>
+                                <span>上传新封面</span>
+                            </span>
+                        </div>
+
+                    </div>
+                </el-col>
+                <el-upload class="avatar-uploader" style="display: none;"
+                    action="http://oaokcs.cnki.net/imwebapi/Home/Upload" v-bind:auto-upload="true"
+                    v-bind:multiple="false" v-bind:on-success="uploadSuccess" v-bind:on-error="uploadError"
+                    v-bind::before-upload="beforeAvatarUpload" v-bind:on-progress="uploadProgress"
+                    accept="bmp,jpg,png,jpeg">
+                    <el-button size="small" type="primary" id="vueuploadBtn">点击上传</el-button>
+                </el-upload>
+            </el-form-item>
+
+
+            <el-form-item label="描述：" prop="desc">
+                <el-input type="textarea" v-model="form.desc" v-bind:rows="5"></el-input>
+            </el-form-item>
+            <el-form-item label="成员：">
+                <el-col v-bind:span="2">
+                    <i id="addPersonBtn" class="iconfont icon-addT" v-on:click="showChooseMember"></i>
+                </el-col>
+                <el-col v-bind:span="18">
+                    <ul class="member-ul">
+                        <li v-for="(item, index) in form.memberList" v-bind:data-uid="item.userId"
+                            v-bind:data-title="item.realName" v-if="index<12 || showAllmember">
+                            <span class="mr18 us">
+                                <span class="posr">
+                                    <img v-bind:src="item.logo" class="head-simg vam" />
+                                    <a href="javascript:;" class="del-redT">
+                                        <i class="iconfont icon-delte  ml10"></i>
+                                    </a>
+                                </span>
+                                <span class="dvm" v-html="item.realName"></span>
+                            </span>
+                        </li>
+                    </ul>
+                </el-col>
+                <el-col v-bind:span="2" v-if="form.memberList.length>12">
+                    <i class="iconfont icon-down link03" v-bind:class="{ 'icon-up': showAllmember}"
+                        v-on:click="showAllmember=!showAllmember"></i>
+                </el-col>
+            </el-form-item>
+            <el-form-item label="是否直播：">
+                <el-radio-group v-model="form.isLive">
+                    <el-radio label="1">是</el-radio>
+                    <el-radio label="0">否</el-radio>
+                </el-radio-group>
+            </el-form-item>
+            <el-form-item label="直播模式：" v-if="form.isLive=='1'">
+                <el-radio-group v-model="form.audienceAuthority">
+                    <el-radio label="0">连接邀请</el-radio>
+                    <el-radio label="1">公开</el-radio>
+                </el-radio-group>
+            </el-form-item>
+            <el-form-item style="margin-left: 180px;">
+                <el-button class="k-bntton k-primary-btn" type="primary" v-on:click="submitForm('form')">确定
+                </el-button>
+                <el-button class="k-bntton k-cancle-btn" v-on:click="cancleClick">取消</el-button>
+            </el-form-item>
+        </el-form>
+
+    </el-scrollbar>
+    <check-members ref="members" v-bind:props="defaultProps" v-bind:empty-text="emptyText" v-bind:radio="radio"
+        v-bind:expanded="expanded" v-bind:title="title" v-bind:append-to-body="true" v-bind:disabled-list="disabledList"
+        @confirm="chooseMemberConfirm"></check-members>
+</div>
+
+<script src=https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js> </script> <!-- 引入vue组件库 -->
+<script src="js/vue.js"></script>
+<script src="js/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>
+
+<script src="js/date.js"></script>
+<script src="js/jquery.cookie.js"></script>
+<!-- 引入 svg 图标 -->
+<script src="fonts/iconfont.js"></script>
+<!-- 引入 选择成员插件 -->
+<script src="js/check-members.min.js"></script>
+
+
+
+<script>
+    Vue.http.options.root = 'http://okcs.test.cnki.net';
+    Vue.http.headers.common['ignore-identity'] = "true";//调用相关接口的是时候，绕过验证
+    //Vue.http.headers.common['accesstoken'] = $.cookie("BID");//调用相关接口的是时候，绕过验证
+
+    new Vue({
+        el: '#app',
+        components: {
+            CheckMembers: CheckMembers
+        },
+        data: function () {
+            return {
+                loading: true,
+                uid: '123',//当前用户uid '@ViewBag.uid'
+                orgid: '@ViewBag.orgid',//当前用户的组织结构id
+                cid: '0',//当前直播的cid '@ViewBag.cid'
+                showAllmember: false,//成员列表中是否展示全部成员
+                //选人插件相关变量
+                defaultProps: {
+                    realName: 'RealName', // key固定value为传入数据的用户名字段
+                    userId: 'id', // key固定value为传入数据的用户id字段
+                    pId: 'pid', // key固定value为传入数据的用户父id字段
+                    logo: 'icon', // key固定value为传入数据的图标字段
+                    department: 'department', // key固定value为传入数据的部门字段
+                    type: 'type', // key固定value为传入数据的类型字段
+                    userType: 0,
+                    // key固定value为用户类型
+                },
+                emptyText: '暂无数据',
+                title: '选择成员', //弹窗标题
+                radio: false, // 是否单选
+                expanded: false, // 是否默认展开
+                allMember: [],//选择成员插件中，左侧列表中的所有成员
+                members: [], //选择成员插件中，右侧已经选中的成员
+
+                form: {
+                    name: '',//名称
+                    date1: '',//开始时间
+                    date2: '',//结束时间
+                    isLive: "0",//是否直播
+                    audienceAuthority: "1",//直播模式
+                    desc: '',//描述
+                    photo: "",
+                    memberList: [{ "realName": "于江虎", "userId": "972597c1-b957-450c-9f2b-c44257bf4fdc", "pId": "67283597-4858-4bce-8063-8c942f37d60b", "logo": "//oaokcs.cnki.net/sso/pic/972597c1-b957-450c-9f2b-c44257bf4fdc", "department": "", "type": "type", "userType": 0 }, { "realName": "张钊源", "userId": "ccaa5f0c-82cd-4293-8c88-5b9115e0f138", "pId": "67283597-4858-4bce-8063-8c942f37d60b", "logo": "//oaokcs.cnki.net/sso/pic/ccaa5f0c-82cd-4293-8c88-5b9115e0f138", "department": "", "type": "type", "userType": 0 }, { "realName": "李伟健", "userId": "fb06b776-166e-4924-a5be-168c8b6dae15", "pId": "67283597-4858-4bce-8063-8c942f37d60b", "logo": "//oaokcs.cnki.net/sso/pic/fb06b776-166e-4924-a5be-168c8b6dae15", "department": "", "type": "type", "userType": 0 }, { "realName": "申志云", "userId": "a99799ee-6a47-4a44-95ad-c6de602d3d04", "pId": "67283597-4858-4bce-8063-8c942f37d60b", "logo": "//oaokcs.cnki.net/sso/pic/a99799ee-6a47-4a44-95ad-c6de602d3d04", "department": "", "type": "type", "userType": 0 }, { "realName": "孔凡多", "userId": "a9d8bfc8-f91c-4cdc-ba8c-4864c95c4631", "pId": "67283597-4858-4bce-8063-8c942f37d60b", "logo": "//oaokcs.cnki.net/sso/pic/a9d8bfc8-f91c-4cdc-ba8c-4864c95c4631", "department": "", "type": "type", "userType": 0 }, { "realName": "郭帅11342", "userId": "097e2c16-b7cb-4191-a64d-79b1ca840a17", "pId": "67283597-4858-4bce-8063-8c942f37d60b", "logo": "//oaokcs.cnki.net/sso/pic/097e2c16-b7cb-4191-a64d-79b1ca840a17", "department": "", "type": "type", "userType": 0 }, { "realName": "李梦月", "userId": "59c27019-6c21-424c-bfec-b2a764964793", "pId": "67283597-4858-4bce-8063-8c942f37d60b", "logo": "//oaokcs.cnki.net/sso/pic/59c27019-6c21-424c-bfec-b2a764964793", "department": "", "type": "type", "userType": 0 }],//已经选中的成员
+                },
+                rules: {
+                    name: [
+                        { required: true, message: '请输入名称', trigger: 'blur' },
+                        { min: 2, max: 20, message: '名称长度应在 2 到 20 个字符', trigger: 'blur' }
+                    ],
+                    date1: [
+                        {  required: true, message: '请选择开始日期', trigger: 'change' }
+                    ],
+                    date2: [
+                        {  required: true, message: '请选择结束时间', trigger: 'change' }
+                    ],
+                    desc:[
+                        { max: 500, message: '描述长度应在 3 到 50 个字符', trigger: 'blur' }
+                    ],
+                },
+            }
+        },
+        computed: {
+            disabledList: function () {
+                return [];
+            }
+        },
+        created: function () {
+            var self = this;
+
+
+            //获取视频会议基本信息
+            self.GetMeetingInfo();
+        },
+        methods: {
+            //获取视频会议基本信息
+            GetMeetingInfo: function () {
+                var self = this;
+                if (self.cid === '0') {
+                    //创建
+                    self.loading = false;
+                } else {
+                    //视频会议信息
+                    this.$http.get('live/CreateMeeting/GetMeetingInfo?cid=' + self.cid).then(function (result) {
+                        if (result.Success) {
+                            self.form.name = result.Content.Title;
+                            self.form.date1 = result.Content.StartDate;
+                            self.form.date2 = result.Content.EndDate;
+                            self.form.photo = result.Content.Photo;//这里这个字段不要返回null
+                            self.form.desc = result.Content.Des;
+                            self.form.isLive = result.Content.Type.toString();
+                            self.form.audienceAuthority = result.Content.AudienceAuthority.toString();
+                            //成员请求
+                            this.$http.get('live/CreateMeeting/GetMeetingMemberInfo?cid=' + self.cid).then(function (result) {
+                                if (result.Success) {
+                                    $.each(result.Content, function (index, value) {
+                                        self.form.memberList.push(value);
+                                    });
+                                } else {
+                                    self.form.memberList = [];
+                                    self.$message('GetMeetingMemberInfo请求失败');
+                                }
+                            },
+                                function () {
+                                    self.$message.error('GetMeetingInfo请求失败');
+                                });
+
+                            self.form.memberList = [];
+
+                        } else {
+                            self.$message('GetMeetingInfo请求失败');
+                        }
+                    },
+                        function () {
+                            self.$message.error('GetMeetingInfo请求失败');
+                        });
+                    self.loading = false;
+                }
+            },
+
+
+            submitForm: function (formName) {
+                var self = this;
+                self.loading = true;
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        if (self.form.memberList.length == 0) {
+                            self.$message({
+                                message: '成员不能为空',
+                                type: 'warning'
+                            });
+                        } else {
+                            var formData = new FormData(); //FormData构造器接收的是一个form的DOM对象
+                            formData.append('cid', self.cid);
+                            formData.append('name', self.form.name);
+                            formData.append('date1', self.form.date1);
+                            formData.append('date2', self.form.date2);
+                            formData.append('photo', self.form.photo);
+                            formData.append('desc', self.form.desc);
+                            formData.append('isLive', self.form.isLive);
+                            formData.append('audienceAuthority', self.form.audienceAuthority);
+                            var memberListStr = "";
+                            $.each(self.form.memberList, function (index, value) {
+                                memberListStr += value.userId + ";";
+                            });
+
+
+                            formData.append('memberList', memberListStr);
+
+
+                            this.$http.post('imwebapi/api/mainapi/CreatOrUpdateMeetingInfo', formData, { emulateJson: true }).then(
+                                result => {
+                                    if (result.Success) {
+                                        self.$message('操作成功！');
+                                        parent.layer && parent.layer.closeAll();
+                                        parent.location.reload();
+                                    } else {
+                                        self.$message.error('操作失败！'+result.Content);
+                                    }
+                                });
+                        }
+                        self.loading = false;
+                    } else {
+                        self.loading = false;
+                        return false;
+                    }
+                });
+            },
+
+
+            beforeAvatarUpload(file) {
+                const isJPG = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg' || file.type === 'image/bmp';
+                const isLtSize = file.size / 1024 / 1024 < 20;
+
+                if (!isJPG) {
+                    this.$message.error('上传图片只能是 JPG、PNG、JPEG、BMP格式!');
+                }
+                if (!isLtSize) {
+                    this.$message.error('上传图片大小必须小于20MB!');
+                }
+                return isJPG && isLt2M;
+            },
+            //文件上传成功时的钩子
+            uploadSuccess: function (response, file, fileList) {
+                this.loading = false;
+                if (response.Success) {
+                    this.form.photo = "http://oaokcs.cnki.net/imwebapi/Home/Download?title=temp&fileCode=" + response.Content;
+                } else {
+                    this.form.photo = "";
+                }
+            },
+            //文件上传时的钩子
+            uploadProgress: function (event, file, fileList) {
+                this.loading = true;
+            },
+            //文件上传失败时的钩子
+            uploadError: function (err, file, fileList) {
+                this.$message.error('图片上传失败!');
+            },
+
+            uploadPhoto: function () {
+                $('#vueuploadBtn').trigger('click');
+            },
+            showChooseMember: function () {
+                var self = this;
+                self.loading = true;
+                self.$http.get('imwebapi/api/mainapi/GetOrgMembers?uid=' + self.cid + "&orgid" + self.orgid).then(function (result) {
+                    if (result.Success) {
+                        self.allMember = result.Content;
+                        //所有成员
+                        var list = [{
+                            data: self.allMember.slice(0),
+                            expanded: true,
+                            isTree: true,
+                            name: '机构成员'
+                        }];
+                        //已经选中的成员
+                        var members = this.form.memberList.slice(0);
+
+                        self.$refs.members.show({
+                            list: list,
+                            members: members
+                        });
+
+                    } else {
+                        self.$message.error('GetOrgMembers请求失败');
+                    }
+                },
+                    function () {
+                        self.$message.error('GetOrgMembers请求失败');
+                    });
+                self.loading = false;
+            },
+            chooseMemberConfirm: function (mems) {
+                this.form.memberList = mems.slice(0);
+            },
+            cancleClick:function(){
+                parent.layer && parent.layer.closeAll();
+                parent.CancelIframe && parent.CancelIframe();
+            }
+
+
+        },
+
+
+    });
+
+
+</script>
