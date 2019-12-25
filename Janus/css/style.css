@@ -3,7 +3,7 @@
 }
 .media-box video{position: relative !important;}
 .vctb-item {background-color: black;}
-.media-box {height: auto !important;}
+.media-box {height: 100% !important;}
 .vct-top {height: calc(100vh - 284px);}
 .el-scrollbar__bar{display: none;}
 
