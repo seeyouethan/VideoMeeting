@@ -4666,6 +4666,7 @@ if (
                       if (
                         "open" === dc.readyState &&
                         pc.sctp //&&
+                        //去掉了大小的校验
                         //length > pc.sctp.maxMessageSize
                       )
                         throw new TypeError(
