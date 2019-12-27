@@ -1,27 +1,31 @@
+﻿
+@{
+    Layout = null;
+}
+
 <!DOCTYPE html>
 
 <head>
-   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-   <title>TRTC-01</title>
-   <!-- 引入样式 -->
-   <link rel="stylesheet" type="text/css" href="../css/Element-UI/index.css">
-   <link rel="stylesheet" type="text/css" href="../css/iconfont.css">
-   <link rel="stylesheet" type="text/css" href="../TRTC/css/getHTMLMediaElement_trtc.css" />
-   <link rel="stylesheet" type="text/css" href="../css/style.css">
-   <link rel="stylesheet" type="text/css" href="../TRTC/css/toastify.min.css">
-   <link rel="stylesheet" type="text/css" href="../TRTC/css/style.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>@(ViewBag.Title+"的视频会议")</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="~/Content/VideoMeeting/css/Element-UI/index.css">
+    <link rel="stylesheet" type="text/css" href="~/Content/VideoMeeting/css/iconfont.css">
+    <link rel="stylesheet" type="text/css" href="~/Content/VideoMeeting/css/style.css">
+    <link rel="stylesheet" type="text/css" href="~/Content/VideoMeeting/TRTC/css/getHTMLMediaElement_trtc.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/VideoMeeting/TRTC/css/toastify.min.css">
+    <link rel="stylesheet" type="text/css" href="~/Content/VideoMeeting/TRTC/css/style.css">
 </head>
 <div id="app" v-bind:class="screenModel?'main-tab':''">
    <el-container>
       <!-- 顶部 -->
       <el-header class="vh-top clearfix">
-         <h1 class="float-l">TRTC本地测试Demo01</h1>
+          <h1 class="float-l">@(ViewBag.Title+"的视频会议")</h1>
          <div class="float-r">
-
             <span>
                <el-tooltip content="分享摄像头" placement="top">
-                  <i class="bg-icon iconfont icon-sxt" v-bind:class="" v-show="hasCamera"
+                  <i class="bg-icon iconfont icon-sxt" v-show="hasCamera"
                      v-on:click="ChangeVideoSource('camera')"></i>
                </el-tooltip>
             </span>
@@ -63,58 +67,62 @@
       </el-header>
       <!-- 主体内容 -->
       <el-main class="v-main">
-         <!-- 右侧-讨论区 -->
-         <div class="video-r" v-bind:class="{ r0: showRight }">
-            <!-- 点击此按钮可以收起右侧 点击时给div加类名r0-->
-            <span class="iconfont icon-rightJ" v-on:click="showRight=!showRight"></span>
-            <el-tabs v-model="rightActiveName">
-               <el-tab-pane label="讨论区" name="first">
-                  <!-- 讨论区内容 -->
-                  <el-scrollbar class="vr-con clearfix" ref="talkPanel">
-                     <infinite-loading direction="top" @infinite="infiniteHandler" spinner="spiral">
-                        <div slot="no-more"></div>
-                        <div slot="no-results"></div>
-                     </infinite-loading>
-                     <div class="vrc-item" v-for="(item, index) in conferenceMsgs">
-                        <p class="clearfix lihe30">
-                           <span class="float-l">
-                              <img v-bind:src="item.photo" class="head-simg mr10" v-cloak />
-                              <span class="mem-width color-9" v-cloak>{{item.trueName}}</span>
-                           </span>
-                           <span class="float-r color-9 mr10" v-cloak>{{item.dateTime}}</span>
-                        </p>
-                        <p class="vrci-txt" v-cloak v-html="item.msgContent">
+          <!-- 右侧-讨论区 -->
+          <div class="video-r" v-bind:class="{ r0: showRight }">
+              <!-- 点击此按钮可以收起右侧 点击时给div加类名r0-->
+              <span class="iconfont icon-rightJ" v-on:click="showRight=!showRight"></span>
+              <el-tabs v-model="rightActiveName">
+                  <el-tab-pane label="讨论区" name="first">
+                      <!-- 讨论区内容 -->
+                      <el-scrollbar class="vr-con clearfix" ref="talkPanel">
+                          <infinite-loading direction="top" @@infinite="infiniteHandler" spinner="spiral">
+                              <div slot="no-more"></div>
+                              <div slot="no-results"></div>
+                          </infinite-loading>
+                          <div class="vrc-item" v-for="(item, index) in conferenceMsgs">
+                              <p class="clearfix lihe30">
+                                  <span class="float-l">
+                                      <img v-bind:src="item.Photo" class="head-simg mr10" v-cloak />
+                                      <span class="mem-width color-9" v-cloak>{{item.TrueName}}</span>
+                                  </span>
+                                  <span class="float-r color-9 mr10" v-cloak>{{item.CreateDate}}</span>
+                              </p>
+                              <p class="vrci-txt" v-cloak v-html="item.Contents">
 
-                        </p>
-                     </div>
+                              </p>
+                          </div>
 
-                  </el-scrollbar>
-                  <div class="vr-bot">
-                     <el-input type="textarea" v-model.trim="msgContent" v-on:keyup.enter.native="SendMessage()">
-                     </el-input>
-                     <button type="submit" slot="reference" class="btn-blue"
-                        v-on:click.prevent="SendMessage()">发表意见</button>
-                  </div>
-               </el-tab-pane>
-            </el-tabs>
-         </div>
-         <!-- 左侧-会议成员与会议观众 -->
-         <div class="video-l" v-bind:class="{ l0: showLeft }">
-            <!-- 点击此按钮可以收起右侧 点击时给div加类名l0-->
-            <span class="iconfont icon-rightJian" v-on:click="showLeft=!showLeft"></span>
-            <el-tabs v-model="leftActiveName">
-               <el-tab-pane name="first">
-                  <span slot="label">会议成员</span>
-                  <el-scrollbar class="vl-con clearfix">
-                     <ul class="member-ul ">
-                        <li v-for="(item, index) in members" v-bind:data-uid="item.id" v-bind:data-title="item.realName"
-                           class="member-li">
-                           <el-popover placement="right" title="" trigger="click">
-                              <el-image slot="reference" v-bind:src="item.icon"></el-image>
-                              <el-image v-bind:src="item.icon" style="width: 320px;height: 320px;"></el-image>
-                           </el-popover>
-                           <!-- <img v-bind:src="item.icon" class="head-img mr10 dynamic-head-img" v-cloak> -->
-                           <div class="vc-r">
+                      </el-scrollbar>
+                      <div class="vr-bot">
+                          <el-input type="textarea" v-model.trim="msgContent" v-on:keyup.enter.native="SendMessage()">
+                          </el-input>
+                          <button type="submit" slot="reference" class="btn-blue"
+                                  v-on:click.prevent="SendMessage()">
+                              发表意见
+                          </button>
+                      </div>
+                  </el-tab-pane>
+              </el-tabs>
+          </div>
+          <!-- 左侧-会议成员与会议观众 -->
+          <div class="video-l" v-bind:class="{ l0: showLeft }">
+              <!-- 点击此按钮可以收起右侧 点击时给div加类名l0-->
+              <span class="iconfont icon-rightJian" v-on:click="showLeft=!showLeft"></span>
+              <el-tabs v-model="leftActiveName">
+                  <el-tab-pane name="first">
+                      <span slot="label">会议成员({{onlineCount}}/{{totalCount}})</span>
+                      <el-scrollbar class="vl-con clearfix">
+                          <ul class="member-ul ">
+                              <li v-for="(item, index) in members" v-bind:data-uid="item.userId" v-bind:data-title="item.realName"
+                                  class="member-li">
+                                  <el-popover placement="right"
+                                              title=""
+                                              trigger="click">
+                                      <el-image slot="reference" v-bind:src="item.logo"></el-image>
+                                      <el-image v-bind:src="item.logo" style="width: 320px;height: 320px;"></el-image>
+                                  </el-popover>
+                                  @*<img v-bind:src="item.logo" class="head-img mr10 dynamic-head-img" v-cloak>*@
+                                  <div class="vc-r">
                               <p class="vc-p">
                                  <span>
                                     <el-tooltip v-bind:content="item.realName" placement="top">
@@ -130,7 +138,7 @@
                                  </span>
                                  <span>
                                     <el-tooltip content="正在发言" placement="top">
-                                       <i class="iconfont icon-sxt"></i>
+                                       <i class="iconfont icon-sxt hide"></i>
                                     </el-tooltip>
                                  </span>
 
@@ -138,67 +146,61 @@
                               <p class="vc-p">
                                  <span v-if="isAdmin">
                                     <el-tooltip content="挂断" placement="top">
-                                       <i class="iconfont icon-gd hide" v-on:click="StopSpeech(item.id)"></i>
+                                       <i class="iconfont icon-gd hide" v-on:click="StopSpeech(item.userId)"></i>
                                     </el-tooltip>
                                  </span>
                                  <span v-if="isAdmin">
                                     <el-tooltip content="同意" placement="top">
-                                       <i class="iconfont icon-yes mr10 hide" v-on:click="AgreeSpeech(item.id)"></i>
+                                       <i class="iconfont icon-yes mr10 hide" v-on:click="AgreeSpeech(item.userId)"></i>
                                     </el-tooltip>
                                  </span>
                                  <span v-if="isAdmin">
                                     <el-tooltip content="拒绝" placement="top">
-                                       <i class="iconfont icon-no hide" v-on:click="DisAgreeSpeech(item.id)"></i>
+                                       <i class="iconfont icon-no hide" v-on:click="DisAgreeSpeech(item.userId)"></i>
                                     </el-tooltip>
                                  </span>
                               </p>
                            </div>
-                           <span class="tab-status"></span>
-                        </li>
-                     </ul>
-                  </el-scrollbar>
+                                  <span class="tab-status"></span>
+</ul>
+                      </el-scrollbar>
+                  </el-tab-pane>
+                  <el-tab-pane label="会议观众" name="second" v-if="isLive==1">
+                      <span slot="label">会议观众({{onlineCount_Audience}}/{{audienceMember.length}})</span>
+                      <el-scrollbar class="vl-con clearfix">
+                          <ul class="audience-ul">
+                              <li v-for="(item, index) in audienceMember" v-bind:data-uid="item.id" v-bind:data-title="item.realName"
+                                  class="member-li">
+                                  <img v-bind:src="item.icon" class="head-img mr10" v-cloak>
+                                  <span class="p1" v-bind:title="item.realName" v-cloak>{{item.realName}}</span>
+                                  <span class="tab-status"></span>
+                          </ul>
+                      </el-scrollbar>
+                  </el-tab-pane>
+              </el-tabs>
 
-               </el-tab-pane>
-               <el-tab-pane label="会议观众" name="second">
-                  <span slot="label">会议观众</span>
-                  <el-scrollbar class="vl-con clearfix">
-                     <ul class="">
-                        <li v-for="(item, index) in members" v-bind:data-uid="item.id" v-bind:data-title="item.realName"
-                           class="member-li">
-                           <img v-bind:src="item.icon" class="head-img mr10" v-cloak>
-                           <span class="p1" v-bind:title="item.realName" v-cloak>{{item.realName}}</span>
-                           <span class="tab-status"></span>
-                     </ul>
-                  </el-scrollbar>
-               </el-tab-pane>
-            </el-tabs>
-            <!-- 
-            <div class="vl-top clearfix">
-               <p class="float-l font-s18">
-                  <i class="iconfont icon-cy"></i>参与人<i class="color-6 font-s16"
-                     v-cloak>({{onlineCount}}/{{totalCount}})</i>
-               </p>
-            </div> -->
-
-         </div>
-         <div class="video-con">
-            <div class="vc-top">
-               <div class="clearfix lihe-norm" v-if="!isAdmin">
-                  <div class="float-l tab-group-v">
-                     <button class="btn-blue change-btn" v-on:click="ApplyForSpeech" v-cloak>{{applyText}}</button>
+          </div>
+          <div class="video-con">
+              <div class="vc-top">
+                  <div class="clearfix lihe-norm" v-if="!(isAdmin || isAudience)">
+                      <div class="float-l tab-group-v">
+                          <button class="btn-blue change-btn" v-on:click="ApplyForSpeech" v-cloak>{{applyText}}</button>
+                      </div>
+                      <p v-if="!isChrome" style="line-height:30px;margin-left:100px;">建议使用Chrome浏览器</p>
                   </div>
-                  <p v-if="!isChrome" style="line-height:30px;margin-left:100px;">建议使用Chrome浏览器</p>
-               </div>
 
 
-               <!-- 视频窗口 -->
-               <el-scrollbar class="vm-con clearfix">
-                  <div class="vct-top" id="videos-container"></div>
-               </el-scrollbar>
-            </div>
-         </div>
+                  <!-- 视频窗口 -->
+                  <el-scrollbar class="vm-con clearfix">
+                      <div class="vct-top" id="videos-container"></div>
+                  </el-scrollbar>
+              </div>
+          </div>
 
-         <div id="disDiv" class="discuss-con posr"></div>
+          <!-- 研讨窗口 -->
+          <div id="disDiv" class="discuss-con posr" v-show="screenModel">
+              <iframe id="DiscussIframe" frameborder="0" style="width:100%;height:100%"></iframe>
+          </div>
       </el-main>
       <!-- 设置弹窗 -->
       <el-dialog visible width="750px" v-bind:visible.sync="dialogVisible" v-cloak>
@@ -235,38 +237,44 @@
       </el-dialog>
    </el-container>
    <div>
-      <video controls="" autoplay="" style="display:none" id="video-preview"></video>
-      <canvas id="canvass" style="display:none"></canvas>
+       <video controls="" autoplay="" style="display:none" id="video-preview"></video>
+       <canvas id="canvass" style="display:none"></canvas>
    </div>
 </div>
 
-<script src=https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js> </script> <!-- 引入vue组件库 -->
-<script src="../js/vue.js"></script>
-<script src="../js/index.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>
+@*<script src=https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js></script>*@
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<!-- 引入vue组件库 -->
+<script src="~/Content/VideoMeeting/js/vue.js"></script>
+<script src="~/Content/VideoMeeting/js/index.js"></script>
+@*<script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>*@
+<script src="~/Content/VideoMeeting/js/vue-resource.js"></script>
+
+<script src="~/Content/VideoMeeting/js/date.js"></script>
+
+
 <!-- 引入RtcMultiConnection组件库 -->
-<script src="../TRTC/js/common.js"></script>
-<script src="../TRTC/js/RTCMultiConnection.js"></script>
-<script src="../TRTC/js/element-common.js"></script>
-<script src="../TRTC/js/socket.io.js"></script>
-<script src="../TRTC/js/adapter.js"></script>
-<script src="../js/vue-infinite-loading.js"></script>
-<script src="../js/date.js"></script>
+<script src="~/Content/VideoMeeting/TRTC/js/common.js"></script>
+<script src="~/Content/VideoMeeting/TRTC/js/RTCMultiConnection.js"></script>
+<script src="~/Content/VideoMeeting/TRTC/js/element-common.js"></script>
+<script src="~/Content/VideoMeeting/TRTC/js/socket.io.js"></script>
+<script src="~/Content/VideoMeeting/TRTC/js/adapter.js"></script>
+<script src="~/Content/VideoMeeting/js/vue-infinite-loading.js"></script>
 
 
-<script src="../TRTC/js/popper.js"></script>
-<script src="../TRTC/js/toastify.js"></script>
-<script src="../TRTC/js/bootstrap-material-design.min.js"></script>
+<script src="~/Content/VideoMeeting/TRTC/js/popper.js"></script>
+<script src="~/Content/VideoMeeting/TRTC/js/toastify.js"></script>
+<script src="~/Content/VideoMeeting/TRTC/js/bootstrap-material-design.min.js"></script>
 <!-- 引入 TRTC WEB SDK 脚本 -->
-<script src="../TRTC/js/trtc.js"></script>
-<!-- Demo 相关脚本 -->
-<script src="../TRTC/js/lib-generate-test-usersig.min.js"></script>
-<script src="../TRTC/js/debug/GenerateTestUserSig.js"></script>
-<script src="../TRTC/js/utils.js"></script>
-<script src="../TRTC/js/rtc-client-common.js"></script>
-<script src="../TRTC/js/rtc-client.js"></script>
-<script src="../TRTC/js/index.js"></script>
-<script src="../TRTC/js/viceoConference_trtc.js"></script>
+<script src="~/Content/VideoMeeting/TRTC/js/trtc.js"></script>
+<script src="~/Content/VideoMeeting/TRTC/js/lib-generate-test-usersig.min.js"></script>
+<script src="~/Content/VideoMeeting/TRTC/js/debug/GenerateTestUserSig.js"></script>
+<script src="~/Content/VideoMeeting/TRTC/js/utils.js"></script>
+<script src="~/Content/VideoMeeting/TRTC/js/rtc-client-common.js"></script>
+<script src="~/Content/VideoMeeting/TRTC/js/rtc-client.js"></script>
+<script src="~/Content/VideoMeeting/TRTC/js/index.js"></script>
+<script src="~/Content/VideoMeeting/TRTC/js/viceoConference_trtc.js"></script>
+
 
 
 <script>
@@ -302,9 +310,9 @@
             isMember: false, //当前用户是否是群组成员，如果不是，则关闭窗口
             hasCamera: false, //是否有摄像头
             conferenceMsgs: [], //右侧讨论消息
-            uid: '689b7df5-9b54-4b61-a028-07e65b667e4d',//"@ViewBag.uid", //当前用户的userid
-            trueName: '刘静杰',//"@ViewBag.trueName", //当前用户的真实姓名
-            conferenceId: '07028c69-0399-4edd-b71e-5fff1baf2a03',//"@ViewBag.cid", //当前视频会议id
+            uid: "@ViewBag.uid", //当前用户的userid
+            trueName: "@ViewBag.trueName", //当前用户的真实姓名
+            conferenceId: "@ViewBag.cid", //当前视频会议id
             msgContent: "", //发表意见的内容
             btnDisable: false,
             datetime: new Date().Format("yyyy-MM-dd hh:mm:ss"), //右侧讨论区滚动的时候，请求数据的时候，请求小于这个时间的10条数据
@@ -318,10 +326,14 @@
             videoinputList: [],//视频设备列表
             audioinputList: [],//音频设备
             screenModel: false,//大屏模式开关
+            audienceMember: [],//观众成员
+            isLive:@ViewBag.type,//是否直播，这里用int表示，1表示是，0 表示否，对应DiscussionMeet中的Type字段
+            isAudience: false,//是否是观众，进入到直播间，不是会议成员则是普通观众，观众信息存放在redis中
+            onlineCount_Audience:0,//观众在线人数
          }
       },
       created: function () {
-         var self = this;
+          var self = this;
          //判断浏览器
          TRTC.checkSystemRequirements().then(result => {
             if (!result) {
@@ -394,25 +406,39 @@
                      ele.fadeOut(10).fadeIn(100);
                      $(ele).insertAfter($(".member-ul").find("li").eq(0))
                   }
-                  self.onlineCount++;
+                   self.onlineCount++;
+
+                   //重新把发言用户提到前面  待优化
+                    $.each(self.onLiveUserList, function (index, value) {
+                       var ele = $(".member-ul li[data-uid='" + value.uid + "']");
+                       if (ele.length !== 0) {
+                          if (ele.index() === 0) {
+                             //第一个固定不动
+                          } else {
+                             //添加到正在发言人的用户后面
+                             ele.fadeOut(10).fadeIn(100);
+                             $(ele).insertAfter($(".member-ul").find("li").eq(0))
+                          }
+                       }
+                    });
                }
             } else {
-               console.log("UserOnline Error! 未找到对应的成员");
+                //判断观众列表
+                if (self.isLive == 1) {
+                    //audience-ul
+                    var ele = $(".audience-ul li[data-uid='" + uid + "']");
+                    if (ele.length !== 0) {
+                        if (!ele.find(".tab-status").hasClass("in")) {
+                            ele.find(".tab-status").addClass("in");
+                            ele.fadeOut(10).fadeIn(100);
+                            $(ele).insertAfter($(".audience-ul").find("li").eq(0))
+                            self.onlineCount_Audience++;
+                        }
+                    }
+                }
             }
 
-            //重新把发言用户提到前面
-            $.each(self.onLiveUserList, function (index, value) {
-               var ele = $(".member-ul li[data-uid='" + value.uid + "']");
-               if (ele.length !== 0) {
-                  if (ele.index() === 0) {
-                     //第一个固定不动
-                  } else {
-                     //添加到正在发言人的用户后面
-                     ele.fadeOut(10).fadeIn(100);
-                     $(ele).insertAfter($(".member-ul").find("li").eq(0))
-                  }
-               }
-            });
+            
          }
          //用户离线，改变状态
          window.UserOffline = function (uid) {
@@ -430,7 +456,19 @@
                   SetUserHangOut(uid);
                }
             } else {
-               console.log("UserOnline Error! 未找到对应的成员" + uid);
+               //判断观众列表
+                if (self.isLive == 1) {
+                    //audience-ul
+                    var ele = $(".audience-ul li[data-uid='" + uid + "']");
+                    if (ele.length !== 0) {
+                        if (ele.find(".tab-status").hasClass("in")) {
+                            ele.find(".tab-status").removeClass("in");
+                            ele.fadeOut(10).fadeIn(100);
+                            $(".audience-ul").append(ele);
+                            self.onlineCount_Audience--;
+                        }
+                    }
+                }
             }
          }
 
@@ -458,49 +496,6 @@
                self.resharpElementFocus();
             }
          }
-
-         //将左侧用户设置/取消为正在直播状态，即添加/移除一个video标签
-         window.SetUserStatusOnLive = function (uid, status) {
-            if (status) {
-               var ele = $(".member-ul li[data-uid='" + uid + "']");
-               if (ele.length !== 0) {
-                  if (ele.find(".icon-sxt").hasClass("hide")) {
-                     ele.find(".icon-sxt").removeClass("hide");
-                  }
-                  if (self.isAdmin) {
-                     if (ele.find(".icon-gd").hasClass("hide")) {
-                        ele.find(".icon-gd").removeClass("hide");
-                     }
-                  } else {
-                     //添加到正在发言人的用户后面
-                     ele.fadeOut(10).fadeIn(100);
-                     $(ele).insertAfter($(".member-ul").find("li").eq(0))
-                  }
-               } else {
-                  console.log("更新左侧的发言状态 Error! 未找到对应的成员");
-               }
-            } else {
-               var ele = $(".member-ul li[data-uid='" + uid + "']");
-               if (ele.length !== 0) {
-                  if (!ele.find(".icon-sxt").hasClass("hide")) {
-                     ele.find(".icon-sxt").addClass("hide");
-                  }
-                  if (!ele.find(".icon-no").hasClass("hide")) {
-                     ele.find(".icon-no").addClass("hide");
-                  }
-                  if (!ele.find(".icon-gd").hasClass("hide")) {
-                     ele.find(".icon-gd").addClass("hide");
-                  }
-                  if (!ele.find(".icon-sxt").hasClass("hide")) {
-                     ele.find(".icon-sxt").addClass("hide");
-                  }
-               } else {
-                  console.log("更新左侧的发言状态 Error! 未找到对应的成员");
-               }
-            }
-
-         }
-
          //左侧请求群组成员
          this.GetGroupMembers();
 
@@ -512,7 +507,6 @@
 
          //开启分享状态，分享摄像头->如果没有摄像头则自动切换到分享桌面
          window.ShowCameraOrDesktop = function () {
-            self.isAdmin = true;
             navigator.getUserMedia({
                video: true,
                audio: true
@@ -537,9 +531,10 @@
 
 
          //管理员收到发言申请
-         window.GetApplyForSpeech = function (uid, realName) {
+         window.GetApplyForSpeech = function (content) {
+
             if (self.isAdmin) {
-               var ele = $(".member-ul li[data-uid='" + uid + "']");
+               var ele = $(".member-ul li[data-uid='" + content.uid + "']");
             if (ele.length !== 0) {
                if (ele.find(".icon-yes").hasClass("hide")) {
                   ele.find(".icon-yes").removeClass("hide");
@@ -552,26 +547,7 @@
             } else {
                console.log("GetApplyForSpeech Error! 未找到对应的成员" + uid);
             }
-
-
-               // self.$confirm(realName + '请求发言', '提示', {
-               //    confirmButtonText: '同意',
-               //    cancelButtonText: '拒绝',
-               //    type: 'info'
-               // }).then(() => {
-               //    self.$message({
-               //       type: 'success',
-               //       message: '已经同意 ' + realName + ' 的发言申请',
-               //    });
-
-               // }).catch(() => {
-               //    self.$message({
-               //       type: 'info',
-               //       message: '已取拒绝 ' + realName + ' 的发言申请',
-               //    });
-               // });
             }
-
          }
          //用户收到管理员的同意发言
          window.GetAgreeSpeech = function (uid) {
@@ -611,7 +587,9 @@
                });
             }
          }
-         //用户收到管理员的停止发言
+         
+
+          //用户收到管理员的停止发言
          window.GetStopSpeech = function (uid) {
             var ele = $(".member-ul li[data-uid='" + uid + "']");
             if (ele.length !== 0) {
@@ -629,13 +607,89 @@
                   type: 'warning'
                });
             }
-         }
+          }
 
+          //用户收到其他新的观众进入房间
+         window.GetNewAudience = function (data) {
+             var audience = self.audienceMember.filter(function (n) {
+                 return n.userId == data.uid;
+             });
+             if (audience != null && audience.length == 1) {
+                 //已经是观众，不用再调用添加
+             }
+             else {
+                 self.audienceMember.unshift(data);
+                 var ele = $(".audience-ul li[data-uid='" + data.uid + "']");
+                 if (ele.length !== 0) {
+                    if (!ele.find(".tab-status").hasClass("in")) {
+                        ele.find(".tab-status").addClass("in");
+                        self.onlineCount_Audience++;
+                    }
+                }
+             }
+          }
 
+          //用户收到其他用户的新的头像(更新头像使用)
+          window.GetNewPhoto = function (data) {
+              var self = this;
+              //var ele = $(".member-ul li[data-uid='" + data.uid + "']");
+              //if (ele.length !== 0) {
+              //    var imag = $(ele).children('img');
+              //    imag.attr("src", data.photo)
+              //}
+
+              var m = self.members.filter(function (n) {
+                  return n.userId == data.uid;
+              });
+              if (m != null && m.length == 1) {
+                  m[0].logo = image;
+              }
+          }
+          //将左侧用户设置/取消为正在直播状态，即添加/移除一个video标签
+          window.SetUserStatusOnLive = function (uid, status) {
+              if (status) {
+                  var ele = $(".member-ul li[data-uid='" + uid + "']");
+                  if (ele.length !== 0) {
+                      if (ele.find(".icon-sxt").hasClass("hide")) {
+                          ele.find(".icon-sxt").removeClass("hide");
+                      }
+                      if (self.isAdmin) {
+                          if (ele.find(".icon-gd").hasClass("hide")) {
+                              ele.find(".icon-gd").removeClass("hide");
+                          }
+                      } else {
+                          //添加到正在发言人的用户后面
+                          ele.fadeOut(10).fadeIn(100);
+                          $(ele).insertAfter($(".member-ul").find("li").eq(0))
+                      }
+                  } else {
+                      console.log("更新左侧的发言状态 Error! 未找到对应的成员");
+                  }
+              } else {
+                  var ele = $(".member-ul li[data-uid='" + uid + "']");
+                  if (ele.length !== 0) {
+                      if (!ele.find(".icon-sxt").hasClass("hide")) {
+                          ele.find(".icon-sxt").addClass("hide");
+                      }
+                      if (!ele.find(".icon-no").hasClass("hide")) {
+                            ele.find(".icon-no").addClass("hide");
+                        }
+                        if (!ele.find(".icon-gd").hasClass("hide")) {
+                            ele.find(".icon-gd").addClass("hide");
+                        }
+                        if (!ele.find(".icon-sxt").hasClass("hide")) {
+                            ele.find(".icon-sxt").addClass("hide");
+                        }
+                  } else {
+                      console.log("更新左侧的发言状态 Error! 未找到对应的成员");
+                  }
+              }
+              
+          }
 
          //初始化rtc客户端
          var userId = self.uid;
-         var roomId = '1988';//'@ViewBag.roomId';
+         var roomId = '@ViewBag.roomId';
          var config = genTestUserSig(userId);
          rtc = new RtcClient({
             userId,
@@ -652,11 +706,11 @@
                this.$message('您已处于发言状态,无需再次申请');
                return;
             }
-            if (this.applying) {
+            @* if (this.applying) {
                this.$message('正在申请中，请等待...');
                return;
-            }
-            multiRtc.send({ "type": 3, "content": this.uid });//发送发言申请消息
+              } *@
+              multiRtc.send({ "type": 3, "content": { uid: this.uid, realName: this.trueName } });//发送发言申请消息
             this.applying = true;
             this.applyText = "申请中...";
          },
@@ -664,40 +718,40 @@
          AgreeSpeech: function (uid) {
             multiRtc.send({ "type": 4, "content": uid });//发送同意发言消息
 
-            var ele = $(".member-ul li[data-uid='" + uid + "']");
-            if (ele.length !== 0) {
-               if (!ele.find(".icon-yes").hasClass("hide")) {
-                  ele.find(".icon-yes").addClass("hide");
-               }
-               if (!ele.find(".icon-no").hasClass("hide")) {
-                  ele.find(".icon-no").addClass("hide");
-               }
-            } else {
-               console.log("GetApplyForSpeech Error! 未找到对应的成员" + uid);
-            }
+            //var ele = $(".member-ul li[data-uid='" + uid + "']");
+            //if (ele.length !== 0) {
+            //   if (!ele.find(".icon-yes").hasClass("hide")) {
+            //      ele.find(".icon-yes").addClass("hide");
+            //   }
+            //   if (!ele.find(".icon-no").hasClass("hide")) {
+            //      ele.find(".icon-no").addClass("hide");
+            //   }
+            //} else {
+            //   console.log("AgreeSpeech Error! 未找到对应的成员" + uid);
+            //}
 
          },
          //拒绝发言
          DisAgreeSpeech: function (uid) {
             multiRtc.send({ "type": 5, "content": uid });//拒绝发言
 
-            var ele = $(".member-ul li[data-uid='" + uid + "']");
-            if (ele.length !== 0) {
-               if (!ele.find(".icon-yes").hasClass("hide")) {
-                  ele.find(".icon-yes").addClass("hide");
-               }
-               if (!ele.find(".icon-no").hasClass("hide")) {
-                  ele.find(".icon-no").addClass("hide");
-               }
-               if (!ele.find(".icon-gd").hasClass("hide")) {
-                  ele.find(".icon-gd").addClass("hide");
-               }
-               if (!ele.find(".icon-sxt").hasClass("hide")) {
-                  ele.find(".icon-sxt").addClass("hide");
-               }
-            } else {
-               console.log("DisAgreeSpeech Error! 未找到对应的成员" + uid);
-            }
+            //var ele = $(".member-ul li[data-uid='" + uid + "']");
+            //if (ele.length !== 0) {
+            //   if (!ele.find(".icon-yes").hasClass("hide")) {
+            //      ele.find(".icon-yes").addClass("hide");
+            //   }
+            //   if (!ele.find(".icon-no").hasClass("hide")) {
+            //      ele.find(".icon-no").addClass("hide");
+            //   }
+            //   if (!ele.find(".icon-gd").hasClass("hide")) {
+            //      ele.find(".icon-gd").addClass("hide");
+            //   }
+            //   if (!ele.find(".icon-sxt").hasClass("hide")) {
+            //      ele.find(".icon-sxt").addClass("hide");
+            //   }
+            //} else {
+            //   console.log("DisAgreeSpeech Error! 未找到对应的成员" + uid);
+            //}
 
          },
          //停止发言
@@ -712,23 +766,23 @@
                RemoveOnLiveUser(uid);
             }
 
-            var ele = $(".member-ul li[data-uid='" + uid + "']");
-            if (ele.length !== 0) {
-               if (!ele.find(".icon-yes").hasClass("hide")) {
-                  ele.find(".icon-yes").addClass("hide");
-               }
-               if (!ele.find(".icon-no").hasClass("hide")) {
-                  ele.find(".icon-no").addClass("hide");
-               }
-               if (!ele.find(".icon-gd").hasClass("hide")) {
-                  ele.find(".icon-gd").addClass("hide");
-               }
-               if (!ele.find(".icon-sxt").hasClass("hide")) {
-                  ele.find(".icon-sxt").addClass("hide");
-               }
-            } else {
-               console.log("StopSpeech Error! 未找到对应的成员" + uid);
-            }
+            //var ele = $(".member-ul li[data-uid='" + uid + "']");
+            //if (ele.length !== 0) {
+            //   if (!ele.find(".icon-yes").hasClass("hide")) {
+            //      ele.find(".icon-yes").addClass("hide");
+            //   }
+            //   if (!ele.find(".icon-no").hasClass("hide")) {
+            //      ele.find(".icon-no").addClass("hide");
+            //   }
+            //   if (!ele.find(".icon-gd").hasClass("hide")) {
+            //      ele.find(".icon-gd").addClass("hide");
+            //   }
+            //   if (!ele.find(".icon-sxt").hasClass("hide")) {
+            //      ele.find(".icon-sxt").addClass("hide");
+            //   }
+            //} else {
+            //   console.log("StopSpeech Error! 未找到对应的成员" + uid);
+            //}
          },
 
 
@@ -906,7 +960,9 @@
             var self = this;
             if (self.isAdmin) {
                if (rtc.isPublished_) {
-                  rtc.localStream_.setVideoProfile('1080p');
+                   rtc.localStream_.setVideoProfile('1080p');                  
+                  //替换流的时候，如果分辨率不同，则会替换失败，类似错误如下;
+                  //RtcError: video resolution of the track (1440 x 900) shall be kept the same as the one defined via setVideoProfile(): 1920 x 1080
                   navigator.mediaDevices.getDisplayMedia({ video: true }).then(stream => {
                      const videoTrack = stream.getVideoTracks()[0];
                      rtc.localStream_.replaceTrack(videoTrack);
@@ -933,7 +989,7 @@
                   } else {
                      rtc.publishScreen();
                   }
-
+                  
                   //设置为平铺
                   self.isOnLive = true;
                   self.resharpElementOverlay();
@@ -943,75 +999,120 @@
             }
          },
 
-         //请求群组成员接口 get 同时判断自己是否是该群组成员，如果不是，则关闭窗口
+         //请求会议成员接口 get 同时判断自己是否是该会议成员，如果不是，则关闭窗口
          GetGroupMembers: function () {
             var self = this;
-            //工作群组
-            this.$http.get('imwebapi/api/PmcApiToImApi/GetGroupInfo?groupID=' + self.conferenceId + "&userID=" + self.uid).then(function (res) {
-               if (res.data.Success) {
-                  self.totalCount = res.data.Content.Members.length + 1;
-                  self.members.push({ id: res.data.Content.Leader.UserID, realName: res.data.Content.Leader.RealName, icon: res.data.Content.Leader.Logo, isAdmin: true, });
-
-                  res.data.Content.Members.forEach(function (item) {
-                     self.members.push({ id: item.UserID, realName: item.RealName, icon: item.Logo, isAdmin: false, });
-                  });
-
-
-                  //判断是否是该群组的成员
-                  var isMember = false;
-                  self.members.forEach(function (item) {
-                     self.memberids.push(item.id);
-                     if (item.id == uid) {
-                        isMember = true;
-                        self.isAdmin = item.isAdmin;
-                     }
-                  });
-
-                  window.multiRtc = DoConnection({ isAdmin: self.isAdmin });
-                  //开启扑捉自己头像
-                  self.CaptureUserPhoto();
-                  if (!isMember) {
-                     setTimeout(function () {
-                        CloseWindow();
-                     }, 3000);
-                     alert('您暂无权限访问该视频会议！');
-                  }
-               }
-
-            },
-               function () {
-                  console.log('GetGroupMembers请求失败处理');
-               });
-         },
-
-         //开启摄像头扑捉用户头像
-         CaptureUserPhoto() {
-            var self = this;
-            var videoPreview = document.getElementById('video-preview');
-            navigator.mediaDevices.getUserMedia({
-               audio: false, video: true,
-            }).then(function (participantStream) {
-               videoPreview.srcObject = participantStream;
-
-               setInterval(self.ChangeImage, 500)
+            //视频会议信息
+            $.ajax({
+                url: '/live/MeetRtc/GetMeetingGroupMember?id=' + self.conferenceId + '&uid=' + self.uid,
+                dataType: "json",   //返回格式为json
+                type: "get",   //请求方式                       
+                success: function (result) {
+                    if (result.Success) {
+                        self.totalCount = result.Content.length;
+                        self.members = result.Content.slice(0);
+                        
+                        self.members.forEach(function (item) {
+                            self.memberids.push(item.userId);
+                            if (self.uid == item.userId) {
+                                self.isAdmin = item.isAdmin;
+                            }
+                        });
+                        window.multiRtc = DoConnection();
+                        if (self.isLive == 1)
+                            self.GetAudienceMembers();
+                        //开启扑捉自己头像
+                        self.CaptureUserPhoto();
+                    } else {
+                        //如果返回为false，那么表示其并不是会议成员，再根据会议的属性【是否直播】去判断该用户是否可以观看会议
+                        if (self.isLive == 1) {
+                            //直播模式                            
+                            self.isAudience = true;
+                            self.GetAudienceMembers();
+                        } else {
+                          setTimeout(function () {
+                                CloseWindow();
+                             }, 3000);
+                            alert('您暂无权限访问该视频会议！');
+                        }
+                    }
+                },                        
             });
          },
-         //改变用户头像，每3s采集一次
-         ChangeImage() {
-            var videoPreview = document.getElementById('video-preview');
-            var cxt = document.getElementById('canvass').getContext('2d');
-            cxt.drawImage(videoPreview, 0, 0, 300, 150);
 
-            var mycanvas = document.getElementById("canvass");
-            var image = mycanvas.toDataURL("image/png");
 
-            var ele = $(".member-ul li[data-uid='" + this.uid + "']");
-            if (ele.length !== 0) {
-               var imag = $(ele).children('img');
-               imag.attr("src", image)
-            }
-            multiRtc.send({ "type": 8, "content": { uid: self.uid, photo: image } });
-         },
+         //请求观众成员
+         GetAudienceMembers: function () {
+            var self = this;
+            $.ajax({
+                url: '/live/MeetRtc/GetConferenceAudienceMember?id=' + self.conferenceId + '&uid=' + self.uid,
+                dataType: "json",   //返回格式为json
+                type: "get",   //请求方式                       
+                success: function (result) {
+                    if (result.Success && result.Content.length!=0) {
+                        self.audienceMember = result.Content.slice(0);
+                        if (self.isAudience) {
+                            window.multiRtc = DoConnection();
+                            //利用filter函数，判断自己是否是新的观众，如果不在这个列表中，还要发通知，通知其他用户，我这个新的观众上线
+                            var audience = self.audienceMember.filter(function (n) {
+                                return n.userId == self.uid;
+                            });
+                            if (audience != null && audience.length == 1) {
+                                //已经是观众，不用再调用Post
+                            } else {
+                                var formData = new FormData(); //FormData构造器接收的是一个form的DOM对象
+                                formData.append('id', self.conferenceId);
+                                formData.append('uid', self.uid);
+                                formData.append('trueName', self.trueName);
+                                self.$http.post('live/MeetRtc/CreateAudience', formData, { emulateJson: true }).then(
+                                    result => {
+                                    if (result.data.Success) {
+                                        self.audienceMember.push(result.data.Content);
+                                        // 7 表示新的观众用户
+                                        multiRtc.send({ "type": 7, "content": result.data.Content });
+                                    } 
+                                });
+                            }
+                        }                        
+                    }
+                }
+            });
+          },
+         //开启摄像头扑捉用户头像
+          CaptureUserPhoto() {
+              var self = this;
+
+              //这里调用video会影响摄像头分辨率的设置，在设置修改分辨率的时候，可能会因为这里分享失败
+              var videoPreview = document.getElementById('video-preview');
+                    navigator.mediaDevices.getUserMedia({
+                        audio: false, video:true,
+                    }).then(function (participantStream) {
+                        videoPreview.srcObject = participantStream;
+                        
+                        setInterval(self.ChangeImage, 3000)
+                    });
+          },
+          //改变用户头像，每3s采集一次
+          ChangeImage() {
+              var self = this;
+              var videoPreview = document.getElementById('video-preview');
+              var cxt = document.getElementById('canvass').getContext('2d');
+              cxt.drawImage(videoPreview, 0, 0, 300, 150);
+
+              var mycanvas = document.getElementById("canvass");
+              var image = mycanvas.toDataURL("image/png");
+
+
+              var m = self.members.filter(function (n) {
+                 return n.userId == self.uid;
+              });
+              if (m != null && m.length == 1) {
+                  m[0].logo = image;
+              }
+              multiRtc.send({ "type": 8, "content": {uid:self.uid,photo:image} });
+          },
+
+
 
          //发送讨论消息
          SendMessage: function () {
@@ -1022,11 +1123,11 @@
                return;
             }
             var formData = new FormData(); //FormData构造器接收的是一个form的DOM对象
-            formData.append('cid', self.conferenceId);
+            formData.append('id', self.conferenceId);
             formData.append('uid', self.uid);
             formData.append('trueName', self.trueName);
             formData.append('msgContent', content);
-            self.$http.post('imwebapi/api/mainapi/CreateConferenceMsg', formData, { emulateJson: true }).then(
+            self.$http.post('live/MeetRtc/CreateConferenceMsg', formData, { emulateJson: true }).then(
                result => {
                   if (result.data.Success) {
                      self.conferenceMsgs.push(result.data.Content);
@@ -1052,14 +1153,14 @@
 
          infiniteHandler($state) {
             var self = this;
-            this.$http.get('imwebapi/api/mainapi/GetConferenceMsg?datetime=' + self.datetime + '&groupid=' + self.conferenceId, { emulateJson: true }).then(function (res) {
+            this.$http.get('live/MeetRtc/GetConferenceMsg?datetime=' + self.datetime + '&id=' + self.conferenceId, { emulateJson: true }).then(function (res) {
 
                if (res.data.Count > 0) {
                   res.data.Content.forEach(function (item) {
                      self.conferenceMsgs.unshift(item);
                   });
                   $state.loaded();
-                  self.datetime = res.data.Content[res.data.Count - 1].dateTime;
+                  self.datetime = res.data.Content[res.data.Count - 1].CreateDate;
                } else {
                   //没有更多的数据了
                   $state.complete();
@@ -1072,16 +1173,15 @@
 
          //修改平铺/主持人模式
          resharpElement: function () {
-            if (!this.screenModel) {
+           if(!this.screenModel) {
                if (this.isFocused) {
-                  this.resharpElementOverlay();
-                  this.resharpMessage = '演讲者模式';
-               } else {
-                  this.resharpElementFocus();
-                  this.resharpMessage = '平铺模式';
-               }
-            }
-
+                   this.resharpElementOverlay();
+                   this.resharpMessage = '演讲者模式';
+                } else {
+                   this.resharpElementFocus();
+                   this.resharpMessage = '平铺模式';
+                }
+            }  
          },
 
          //平铺模式
@@ -1089,11 +1189,11 @@
             if (this.screenModel) {
                //全屏模式下，视频面板只有一列
                var wh = GetFocusedWidthHeight();
-               $.each($("#videos-container").children("div"), function (index, element) {
-                  element.style.width = wh.width + 'px';
-                  element.style.height = wh.height + 'px';
-                  $(element.querySelector("video")).height("100%");
-               });
+                  $.each($("#videos-container").children("div"), function (index, element) {
+                     element.style.width = wh.width + 'px';
+                     element.style.height = wh.height + 'px';
+                     $(element.querySelector("video")).height("100%");
+                  });
             } else {
                this.isFocused = false;
                if (this.showLeft && this.showRight) {
@@ -1203,138 +1303,15 @@
             }
          },
 
-         //新建协同研讨(自建群中建立)
-         OpenOrCreateDiscussNew: function () {
-            var _this = this;
-            if (_this.discussId === "") {
-               //创建
-               var addUserIds = _this.memberids;
-               var beginTime, endTime;
-               beginTime = _this.datetime;
-               endTime = "2119-9-9 19:59:59";
-               $.ajax({
-                  type: "post",
-                  url: '/Discuss/discussadd/CreateDiscussNew',
-                  data: {
-                     title: '本地测试' + '的协同研讨',
-                     summary: '本地测试' + '-视频会议的协同研讨',
-                     addUserIds: addUserIds,
-                     beginTime: beginTime,
-                     endTime: endTime,
-                     disType: 0,
-                     disId: ""
-                  },
-                  dataType: "json",
-                  success: function (result) {
-                     if (result.Code == 200 && result.Data) {
-                        _this.$message('创建成功');
-                        _this.discussId = result.Data.Data;
-                        _this.CreateConferenceDiscuss();
-                     } else {
-                        _this.$message(result.ErrorMessage);
-                     }
-                  },
-                  error: function () {
-                     _this.$message("请求失败");
-
-                  }
-               });
-            } else {
-               //1.判断是否已经被删除，
-               //  如果已经被删除，则重新创建，然后打开，同时修改本地数据库的对应的        discussId
-               //  如果没有被删除，则2.判断是否有新成员，
-               //          如果没有新成员，直接打开就
-               //          如果有新成员/删除的成员，则调用修改的接口，然后再打开
-
-               _this.$http.get('/DiscussWebAPI/api/discuss/GetDiscussInfoStatus?disucssId=' + _this.discussId,
-                  { emulateJson: true, }).then(
-                     result => {
-                        if (result.data.Success) {
-                           if (result.data.Content) {
-                              //没有删除,
-                              _this.$http.get('/DiscussWebAPI/api/discuss/GetDiscussParticipantInfos?did=' + _this.discussId, { emulateJson: true, }).then(
-                                 result => {
-                                    if (result.data.Success) {
-                                       //计算得出新增的用户和删除的用户
-                                       var finalMemberIds = [];
-                                       $.each(result.data.Content, function (index, value) {
-                                          finalMemberIds.push(value.UserId || item.id);
-                                       });
-                                       var modify = _this.arrayCompare(finalMemberIds, _this.memberids);
-
-
-                                       if (modify[0].length !== 0 || modify[1].length !== 0) {
-
-                                          $.ajax({
-                                             type: "post",
-                                             url: '/Discuss/discussadd/ModifyDiscuss',
-                                             data: {
-                                                disId: _this.discussId,
-                                                addUserIds: modify[1],
-                                                reduceUserIds: modify[0],
-                                                beginTime: _this.datetime,
-                                                endTime: "2119-9-9 19:59:59",//添加一个无限大的时间作为结束时间
-                                             },
-                                             dataType: "json",
-                                             success: function (result) {
-
-                                                if (result.Code == 200 && result.Data.Data) {
-                                                   //修改成功
-                                                   var openUrl = "/discuss/discuss/DiscussJump?did=" + _this.discussId + "&from=group";
-                                                   if (_this.conferenceId.length === 36) {
-                                                      openUrl = "/discuss/discuss/DiscussJump?did=" + _this.discussId + "&from=";
-                                                   }
-                                                   window.open(openUrl, '_blank');
-                                                } else {
-                                                   _this.$message.error('ModifyDiscuss失败！');
-                                                   console.log(result.data.Error);
-                                                   _this.discussId = "";
-                                                }
-                                                _this.btnDisable = false;
-                                             },
-                                             error: function () {
-                                                _this.btnDisable = false;
-
-                                             }
-                                          });
-                                       } else {
-                                          //直接打开
-                                          var openUrl = "/discuss/discuss/DiscussJump?did=" + _this.discussId + "&from=group";
-                                          if (_this.conferenceId.length === 36) {
-                                             openUrl = "/discuss/discuss/DiscussJump?did=" + _this.discussId + "&from=";
-                                          }
-                                          window.open(openUrl, '_blank');
-                                          _this.btnDisable = false;
-                                       }
-
-                                    } else {
-                                       console.log(result.data.Error);
-                                    }
-                                 });
-                           }
-                           else {
-                              //已经删除了
-                              //重新创建，重新打开
-                              _this.discussId = "";
-                              _this.OpenOrCreateDiscussNew();
-                           }
-
-                        } else {
-                           console.log(result.data.Error);
-                        }
-                     });
-            }
-         },
-
-         //新建协同研讨(工作群中建立)
-         OpenOrCreateDiscussByGroup: function () {
+         //打开或新建协同研讨
+         OpenOrCreateDiscussByGroup: function (cb) {
             var _this = this;
 
             if (_this.discussId === "") {
                //创建
                var addUserIds = _this.memberids;
                var beginTime, endTime;
-               beginTime = _this.datetime;
+               beginTime = new Date().Format("yyyy-MM-dd hh:mm:ss");
                endTime = "2119-9-9 19:59:59";
                $.ajax({
                   type: 'Post',
@@ -1347,8 +1324,8 @@
                         Creator: "",//暂时没传，好像没用到
                         EndTime: endTime,
                         PostTime: beginTime,
-                        Summary: '本地测试' + '-视频会议的协同研讨',
-                        Title: '本地测试' + '的协同研讨',
+                        Summary: '@ViewBag.Title' + '-视频会议的协同研讨',
+                        Title: '@ViewBag.Title' + '视频会议的协同研讨',
                      }
                   },
                   dataType: "json",
@@ -1357,7 +1334,7 @@
 
                         _this.$message('创建成功');
                         _this.discussId = result.Other;
-                        _this.CreateConferenceDiscuss();
+                        _this.CreateConferenceDiscuss(cb);
                      } else {
                         _this.$message(result.ErrorMessage);
                      }
@@ -1398,7 +1375,7 @@
                                                 disId: _this.discussId,
                                                 addUserIds: modify[1],
                                                 reduceUserIds: modify[0],
-                                                beginTime: _this.datetime,
+                                                beginTime: new Date().Format("yyyy-MM-dd hh:mm:ss"),
                                                 endTime: "2119-9-9 19:59:59",
                                              },
                                              dataType: "json",
@@ -1407,10 +1384,8 @@
                                                 if (result.Code == 200 && result.Data.Data) {
                                                    //修改成功
                                                    var openUrl = "/discuss/discuss/DiscussJump?did=" + _this.discussId + "&from=group";
-                                                   if (_this.conferenceId.length === 36) {
-                                                      openUrl = "/discuss/discuss/DiscussJump?did=" + _this.discussId + "&from=";
-                                                   }
-                                                   window.open(openUrl, '_blank');
+                                                   
+                                                    cb && cb(openUrl);
                                                 } else {
                                                    _this.$message.error('ModifyDiscuss失败！');
                                                    console.log(result.data.Error);
@@ -1424,10 +1399,8 @@
                                           });
                                        } else {
                                           var openUrl = "/discuss/discuss/DiscussJump?did=" + _this.discussId + "&from=group";
-                                          if (_this.conferenceId.length === 36) {
-                                             openUrl = "/discuss/discuss/DiscussJump?did=" + _this.discussId + "&from=";
-                                          }
-                                          window.open(openUrl, '_blank');
+                                          
+                                           cb && cb(openUrl);
                                           _this.btnDisable = false;
                                        }
 
@@ -1440,7 +1413,7 @@
                               //已经删除了
                               //重新创建，重新打开
                               _this.discussId = "";
-                              _this.OpenOrCreateDiscussByGroup();
+                              _this.OpenOrCreateDiscussByGroup(cb);
                            }
                         }
                         else {
@@ -1451,23 +1424,20 @@
          },
 
          //创建完协同研讨后，在自己的数据库中保存一份对应的会议和协同研讨的数据
-         CreateConferenceDiscuss: function () {
+         CreateConferenceDiscuss: function (cb) {
             var self = this;
             var formData = new FormData(); //FormData构造器接收的是一个form的DOM对象
-            formData.append('groupid', this.conferenceId);
+            formData.append('id', this.conferenceId);
             formData.append('discussid', this.discussId);
-            this.$http.post('imwebapi/api/mainapi/CreateConferenceDiscuss', formData, { emulateJson: true }).then(
+             this.$http.post('live/MeetRtc/CreateConferenceDiscuss', formData, { emulateJson: true }).then(
                result => {
                   if (result.data.Success) {
-                     var openUrl = "/discuss/discuss/DiscussJump?did=" + self.discussId + "&from=group";
-                     if (this.conferenceId.length === 36) {
-                        openUrl = "/discuss/discuss/DiscussJump?did=" + self.discussId + "&from=";
-                     }
-                     window.open(openUrl, '_blank');
-                     this.btnDisable = false;
+                     openUrl = "/discuss/discuss/DiscussJump?did=" + self.discussId + "&from=";
+                     
+                      this.btnDisable = false;
+                      cb && cb(openUrl);
                   } else {
-                     this.$message.error('CreateConferenceDiscuss失败！');
-                     console.log(result.data.Error);
+                     this.$message.error('CreateConferenceDiscuss失败！');                     
                      self.discussId = "";
                      this.btnDisable = false;
                   }
@@ -1480,15 +1450,17 @@
                return;
             }
             this.btnDisable = true;
-            if (this.conferenceId.length === 36) {
-               //工作群
-               this.OpenOrCreateDiscussByGroup();
-            } else {
-               //聊天群(自建群）
-               this.OpenOrCreateDiscussNew();
-            }
+             this.OpenOrCreateDiscussByGroup(function (openUrl) {
+                 window.open(openUrl, '_blank');
+             });
          },
 
+          OpenOrCreateDiscussInIframe: function () {
+
+              this.OpenOrCreateDiscussByGroup(function (openUrl) {
+                  document.getElementById("DiscussIframe").src = 'https://oaokcs.cnki.net' + openUrl;
+              });
+          },
 
 
       },
@@ -1516,7 +1488,15 @@
          },
 
          screenModel(val, oldVal) {
+           
             setTimeout(this.resharpElementOverlay, 400);
+
+             if (val) {
+                 this.OpenOrCreateDiscussInIframe();
+             } else {
+                 document.getElementById("DiscussIframe").src = "";
+             }
+
          },
          onLiveUserList(val, oldVal) {
             console.log("当前发言人--->", val);

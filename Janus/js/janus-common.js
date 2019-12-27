@@ -30,16 +30,16 @@ function CreatePlayerElement(config) {
         if (muteAudio.className.indexOf('icon-yyG') != -1) {
             muteAudio.className = muteAudio.className.replace('icon-yyG', 'icon-yy');
             muteAudio.setAttribute('title', "静音");
-            if (config.unmuteAudio) {config.unmuteAudio();}else{
-                document.getElementById(config.videoid).muted=false;
-                document.getElementById(config.videoid).volume=1;
+            if (config.unmuteAudio) { config.unmuteAudio(); } else {
+                document.getElementById(config.videoid).muted = false;
+                document.getElementById(config.videoid).volume = 1;
             }
         } else {
             muteAudio.className = muteAudio.className.replace('icon-yy', 'icon-yyG');
             muteAudio.setAttribute('title', "取消静音");
-            if (config.muteAudio) {config.muteAudio();}else{
-                document.getElementById(config.videoid).muted=true;
-                document.getElementById(config.videoid).volume=0;
+            if (config.muteAudio) { config.muteAudio(); } else {
+                document.getElementById(config.videoid).muted = true;
+                document.getElementById(config.videoid).volume = 0;
             }
         }
     }
@@ -58,7 +58,7 @@ function CreatePlayerElement(config) {
         } else {
             muteVideo.className = muteVideo.className.replace('icon-videoImg', 'icon-videoImg icon-videoImgNo');
             muteVideo.setAttribute('title', "播放");
-            if (config.muteVideo) {config.muteVideo();}else{
+            if (config.muteVideo) { config.muteVideo(); } else {
                 document.getElementById(config.videoid).pause();
             }
         }
@@ -120,6 +120,14 @@ function CreatePlayerElement(config) {
 
     if (config.mediaStream) {
         mediaElement.srcObject = mediaStream;
+        //防止暂停
+        mediaElement.addEventListener('pause', function () {
+            //暂停开始执行的函数
+            mediaElement.play();
+        });
+        mediaElement.onclick = function () {		
+            SetFocus("div_" + uid);
+        };
     }
     mediaElementContainer.appendChild(mediaElement);
     if (config.gdVideo) {

@@ -25,7 +25,7 @@
             <div class="float-r">
                 <span>
                     <el-tooltip content="分享摄像头" placement="top">
-                        <i class="bg-icon iconfont icon-sxt" v-if="hasCamera"
+                        <i class="bg-icon iconfont icon-sxt" v-show="hasCamera"
                            v-on:click="ChangeVideoSource('camera')"></i>
                     </el-tooltip>
                 </span>
@@ -66,7 +66,7 @@
             </div>
         </el-header>
         <!-- 主体内容 -->
-        <el-main class="v-main">
+        <el-main class="v-main" id="appMain">
             <!-- 右侧-讨论区 -->
             <div class="video-r" v-bind:class="{ r0: showRight }">
                 <!-- 点击此按钮可以收起右侧 点击时给div加类名r0-->
@@ -119,35 +119,48 @@
                                                 title=""
                                                 trigger="click">
                                         <el-image slot="reference" v-bind:src="item.logo"></el-image>
-                                        <el-image v-bind:src="item.logo" style="width: 200px;height: 200px;"></el-image>
+                                        <el-image v-bind:src="item.logo" style="width: 320px;height: 320px;"></el-image>
                                     </el-popover>
                                     @*<img v-bind:src="item.logo" class="head-img mr10 dynamic-head-img" v-cloak>*@
-                                    <span class="p1" v-bind:title="item.realName" v-cloak>{{item.realName}}</span>
-                                    <span v-if="item.isAdmin">
-                                        <el-tooltip content="主持人" placement="top">
-                                            <i class="bg-icon iconfont icon-zcr"></i>
-                                        </el-tooltip>
-                                    </span>
-                                    <span>
-                                        <el-tooltip content="正在发言" placement="top">
-                                            <i class="bg-icon iconfont icon-sxt hide"></i>
-                                        </el-tooltip>
-                                    </span>
-                                    <span v-if="isAdmin">
-                                        <el-tooltip content="挂断" placement="top">
-                                            <i class="bg-icon iconfont icon-gd hide" v-on:click="StopSpeech(item.userId)"></i>
-                                        </el-tooltip>
-                                    </span>
-                                    <span v-if="isAdmin">
-                                        <el-tooltip content="同意" placement="top">
-                                            <i class="bg-icon iconfont icon-yes hide" v-on:click="AgreeSpeech(item.userId)"></i>
-                                        </el-tooltip>
-                                    </span>
-                                    <span v-if="isAdmin">
-                                        <el-tooltip content="拒绝" placement="top">
-                                            <i class="bg-icon iconfont icon-no hide" v-on:click="DisAgreeSpeech(item.userId)"></i>
-                                        </el-tooltip>
-                                    </span>
+                                    <div class="vc-r">
+                              <p class="vc-p">
+                                 <span>
+                                    <el-tooltip v-bind:content="item.realName" placement="top">
+
+                                       <span class="p1 mem-width" v-bind:title="item.realName"
+                                          v-cloak>{{item.realName}}</span>
+                                    </el-tooltip>
+                                 </span>
+                                 <span v-if="item.isAdmin">
+                                    <el-tooltip content="主持人" placement="top">
+                                       <i class="iconfont icon-zcr mr10"></i>
+                                    </el-tooltip>
+                                 </span>
+                                 <span>
+                                    <el-tooltip content="正在发言" placement="top">
+                                       <i class="iconfont icon-sxt hide"></i>
+                                    </el-tooltip>
+                                 </span>
+
+                              </p>
+                              <p class="vc-p">
+                                 <span v-if="isAdmin">
+                                    <el-tooltip content="挂断" placement="top">
+                                       <i class="iconfont icon-gd hide" v-on:click="StopSpeech(item.userId)"></i>
+                                    </el-tooltip>
+                                 </span>
+                                 <span v-if="isAdmin">
+                                    <el-tooltip content="同意" placement="top">
+                                       <i class="iconfont icon-yes mr10 hide" v-on:click="AgreeSpeech(item.userId)"></i>
+                                    </el-tooltip>
+                                 </span>
+                                 <span v-if="isAdmin">
+                                    <el-tooltip content="拒绝" placement="top">
+                                       <i class="iconfont icon-no hide" v-on:click="DisAgreeSpeech(item.userId)"></i>
+                                    </el-tooltip>
+                                 </span>
+                              </p>
+                           </div>
                                     <span class="tab-status"></span>
                             </ul>
                         </el-scrollbar>
@@ -299,24 +312,39 @@
             isLive:@ViewBag.type,//是否直播，这里用int表示，1表示是，0 表示否，对应DiscussionMeet中的Type字段
             isAudience: false,//是否是观众，进入到直播间，不是会议成员则是普通观众，观众信息存放在redis中
             onlineCount_Audience:0,//观众在线人数
-
             remoteFeeds: [],//其他在线用户集合
+            creator:'',//群组管理员
          }
       },
        created: function () {
            var self = this;
-      var server = "wss://rtc.cnki.net/janus";
+           var server = "wss://rtc.cnki.net/janus";
            window.janus = null;
            window.sfutest = null;
            window.opaqueId = "videoroom-" + self.conferenceId;
            window.mypvtid = null;
+           //获取Url中后面的参数值
+            window.getUrlKey = function (name) {
+                return (
+                    decodeURIComponent(
+                        (new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(
+                            location.href
+                        ) || [, ''])[1].replace(/\+/g, '%20')
+                    ) || null
+                );
+            }
+            //允许发言后，重新打开界面，加个参数 isOnLive=1
+         if (getUrlKey("isOnLive") == 1 || getUrlKey("isOnLive") == "1") {
+            self.isOnLive = true;
+            self.applyingResult = true;
+         }
 
            window.CreateJanus = function () {
                Janus.init({
                    debug: "all",
                    callback: function () {
                        if (!Janus.isWebrtcSupported()) {
-                           alert("您的浏览器不支持WebRTC，请使用Chrome浏览器。");
+                           console.error("您的浏览器不支持WebRTC，请使用Chrome浏览器。");
                            return;
                        }
                        janus = new Janus(
@@ -336,8 +364,8 @@
                                                Janus.listDevices(initDevices);
                                            },
                                            error: function (error) {
-                                               Janus.error("  -- Error attaching plugin...", error);
-                                               alert("Error attaching plugin... " + error);
+                                               console.error("  -- Error attaching plugin...", error);
+                                               console.error("Error attaching plugin... " + error);
                                            },
                                            consentDialog: function (on) {
                                                Janus.debug("Consent dialog should be " + (on ? "on" : "off") + " now");
@@ -349,12 +377,6 @@
                                                if (!on) {
                                                    //加載中...
                                                    return;
-                                               }
-                                               console.warn("on---");
-                                               if (self.isAdmin || self.applyingResult || self.isOnLive) {
-
-                                               } else {
-                                                   removeStream();
                                                }
 
                                            },
@@ -370,11 +392,17 @@
                                                        if (self.isAudience) {
                                                                publishOwnFeed('none');
                                                        } else {
-                                                           if (self.hasCamera) {
+                                                           if(self.isOnLive || self.isAdmin){
+                                                            if (self.hasCamera) {
                                                                publishOwnFeed('camera');
                                                            } else {
                                                                publishOwnFeed('desktop');
                                                            }
+                                                            }else {
+                                                publishOwnFeed('none');
+                                            }
+
+                                                           
                                                        }
                                                        
 
@@ -395,8 +423,8 @@
                                                        }
                                                    } else if (event === "destroyed") {
                                                        // The room has been destroyed
-                                                       Janus.warn("The room has been destroyed!");
-                                                       alert("The room has been destroyed", function () {
+                                                       console.warn("The room has been destroyed!");
+                                                       console.error("The room has been destroyed", function () {
                                                            window.location.reload();
                                                        });
                                                    } else if (event === "event") {
@@ -431,12 +459,6 @@
                                                                    SetIsSpeaking(remoteFeed.display, false);
                                                                }
                                                            }
-                                                           if (remoteFeed.display) {
-                                                               //去掉摄像头标记
-                                                               UserOffline(remoteFeed.display);
-                                                               SetIsSpeaking(remoteFeed.display, false);
-                                                           }
-
                                                        }
                                                        else if (msg["unpublished"] !== undefined && msg["unpublished"] !== null) {
                                                            //leaving和unpublished都会导致无法收到文字消息
@@ -496,7 +518,7 @@
                                                                        sfutest.send({ message: { audio: true, video: true, }, "jsep": jsep });
                                                                    },
                                                                    error: function (error) {
-                                                                       alert("WebRTC error... " + JSON.stringify(error));
+                                                                       console.error("WebRTC error... " + JSON.stringify(error));
                                                                    }
                                                                });
                                                        },//关闭视频方法
@@ -543,7 +565,7 @@
                                        });
                                },
                                error: function (error) {
-                                   Janus.error(error);
+                                   console.error(error);
 
                                },
                                destroyed: function () {
@@ -574,7 +596,7 @@
                                self.liveType = type;
                            },
                            error: function (error) {
-                               Janus.error("WebRTC error:", error);
+                               console.error("WebRTC error:", error);
 
                            }
                        });
@@ -595,7 +617,7 @@
                                self.liveType = type;
                            },
                            error: function (error) {
-                               Janus.error("WebRTC error:", error);
+                               console.error("WebRTC error:", error);
 
                            }
                        });
@@ -611,7 +633,7 @@
                                self.liveType = type;
                            },
                            error: function (error) {
-                               Janus.error("WebRTC error:", error);
+                               console.error("WebRTC error:", error);
                            }
                        });
                }
@@ -619,7 +641,7 @@
            }
            window.createRoom = function () {
                //创建房间
-               var body = { "request": "create", "room": self.roomId, "publishers": 100, "bitrate": 128 * 1024, "bitrate_cap": true, };
+               var body = { "request": "create", "room": self.roomId, "publishers": 100, "bitrate": 2*1024 * 1024, "bitrate_cap": true, };
                sfutest.send({
                    "message": body,
                    success: function (result) {
@@ -651,13 +673,13 @@
                            remoteFeed.send({ "message": subscribe });
                        },
                        error: function (error) {
-                           Janus.error("  -- Error attaching plugin...", error);
-                           alert("Error attaching plugin... " + error);
+                           console.error("  -- Error attaching plugin...", error);
+                           console.error("Error attaching plugin... " + error);
                        },
                        onmessage: function (msg, jsep) {
                            var event = msg["videoroom"];
                            if (msg["error"] !== undefined && msg["error"] !== null) {
-                               alert(msg["error"]);
+                               console.error(msg["error"]);
                            } else if (event != undefined && event != null) {
                                if (event === "attached") {
                                    UserOnline(uid);//设置为正在分享视频状态
@@ -692,8 +714,8 @@
                                            remoteFeed.send({ "message": body, "jsep": jsep });
                                        },
                                        error: function (error) {
-                                           Janus.error("WebRTC error:", error);
-                                           alert("WebRTC error... " + JSON.stringify(error));
+                                           console.error("WebRTC error:", error);
+                                           console.error("WebRTC error... " + JSON.stringify(error));
                                        }
                                    });
                            }
@@ -714,6 +736,8 @@
                               4 表示主持人同意发言
                               5 表示主持人拒绝发言
                               6 表示xxx用户停止发言
+                              7 表示新的观众
+                              8 表示新的用户头像
                            */
                            if (content.type === 0) {
                                //聊天消息
@@ -742,6 +766,12 @@
                            } else if (content.type === 6) {
                                //xxx发言被挂断
                                GetStopSpeech(content.content)
+                           }else if (content.type === 7) {
+                               //新的观众
+                               GetNewAudience(content.content)
+                           }else if (content.type === 8) {
+                               //xxx发言被挂断
+                               GetNewPhoto(content.content)
                            }
                        },
                        webrtcState: function (on) {
@@ -839,7 +869,8 @@
                     4 表示主持人同意发言
                     5 表示主持人拒绝发言
                     6 表示xxx用户停止发言
-                    8 表示将xxx用户设置为停止发言状态
+                    7 表示新的观众
+                    8 表示新的用户头像
                 */
 
                var message = {
@@ -850,7 +881,7 @@
                };
                sfutest.data({
                    text: JSON.stringify(message),
-                   error: function (reason) { alert(reason); },
+                   error: function (reason) { console.error(reason); },
                    success: function () {
                        $('#data').val('');
                    }
@@ -874,7 +905,7 @@
                            self.liveType = "none";
                        },
                        error: function (error) {
-                           alert("WebRTC error... " + JSON.stringify(error));
+                           console.error("WebRTC error... " + JSON.stringify(error));
                        }
                    });
            }
@@ -890,25 +921,6 @@
                });
            }
 
-           //普通用户登录后，先发送开启摄像头\桌面分享，然后再调用以下方法，关闭摄像头\桌面分享
-           window.removeStream = function () {
-               sfutest.createOffer(
-                   {
-                       media: { removeVideo: true, removeAudio: true, data: true, audioSend: false, videoSend: false },
-                       success: function (jsep) {
-                           Janus.debug(jsep);
-                           var publish = { "request": "configure", "audio": false, "video": false, "data": true, refresh: true };
-                           sfutest.send({ "message": publish, "jsep": jsep });
-                           //自己变并不在线的消息，作为一种补偿机制
-                           var content = JSON.stringify({ "type": 8, "content": self.uid });
-                           sendData(content);
-                       },
-                       error: function (error) {
-                           alert("WebRTC error... " + JSON.stringify(error));
-                       }
-                   });
-
-           }
 
            var indexChrome = navigator.userAgent.indexOf("Chrome");
            if (indexChrome != -1) {
@@ -998,23 +1010,11 @@
                   } else {
                      //添加到正在发言人的用户后面
                      ele.fadeOut(10).fadeIn(100);
-                     $(ele).insertAfter($(".member-ul").find("li").eq(0))
+                     var liveCount = $(".member-ul").find("li.live").length;
+
+                     $(ele).insertAfter($(".member-ul").find("li").eq(liveCount));
                   }
                    self.onlineCount++;
-
-                   //重新把发言用户提到前面  待优化
-                    $.each(self.onLiveUserList, function (index, value) {
-                       var ele = $(".member-ul li[data-uid='" + value.uid + "']");
-                       if (ele.length !== 0) {
-                          if (ele.index() === 0) {
-                             //第一个固定不动
-                          } else {
-                             //添加到正在发言人的用户后面
-                             ele.fadeOut(10).fadeIn(100);
-                             $(ele).insertAfter($(".member-ul").find("li").eq(0))
-                          }
-                       }
-                    });
                }
             } else {
                 //判断观众列表
@@ -1038,6 +1038,9 @@
          window.UserOffline = function (uid) {
             var ele = $(".member-ul li[data-uid='" + uid + "']");
             if (ele.length !== 0) {
+                if (ele.hasClass("live")) {
+                  ele.removeClass("live");
+               }
                if (ele.find(".tab-status").hasClass("in")) {
                   ele.find(".tab-status").removeClass("in");
                   if (ele.index() === 0) {
@@ -1047,7 +1050,6 @@
                      $(".member-ul").append(ele);
                   }
                   self.onlineCount--;
-                  SetUserHangOut(uid);
                }
             } else {
                //判断观众列表
@@ -1101,36 +1103,51 @@
 
          //管理员收到发言申请
          window.GetApplyForSpeech = function (content) {
-            self.$confirm(content.realName + '请求发言', '提示', {
-               confirmButtonText: '同意',
-               cancelButtonText: '拒绝',
-               type: 'info'
-            }).then(() => {
-               self.$message({
-                  type: 'success',
-                  message: '已经同意 ' + content.realName + ' 的发言申请',
-               });
-                self.AgreeSpeech(content.uid);
+            if (self.isAdmin) {
+               var ele = $(".member-ul li[data-uid='" + content.uid + "']");
+                if (ele.length !== 0) {
+               if (ele.find(".icon-yes").hasClass("hide")) {
+                  ele.find(".icon-yes").removeClass("hide");
+               }
+               if (ele.find(".icon-no").hasClass("hide")) {
+                  ele.find(".icon-no").removeClass("hide");
+               }
+               ele.fadeOut(100).fadeIn(100);
+                  $(ele).insertAfter($(".member-ul").find("li").eq(0))
+            } else {
+               console.log("GetApplyForSpeech Error! 未找到对应的成员" + uid);
+            }
+            }
 
-            }).catch(() => {
-               self.$message({
-                  type: 'info',
-                  message: '已取拒绝 ' +content.realName + ' 的发言申请',
-               });
-                self.DisAgreeSpeech(content.uid);
-            });
          }
          //用户收到管理员的同意发言
          window.GetAgreeSpeech = function (uid) {
 
+        var ele = $(".member-ul li[data-uid='" + uid + "']");
+            if (ele.length !== 0) {
+               if (ele.find(".icon-sxt").hasClass("hide")) {
+                  ele.find(".icon-sxt").removeClass("hide");
+               }
+               if (ele.index() !== 0) {
+                  ele.fadeOut(100).fadeIn(100);
+                  $(ele).insertAfter($(".member-ul").find("li").eq(0))
+               }
+            } else {
+               console.log("GetAgreeSpeech Error! 未找到对应的成员" + uid);
+            }
             if (uid == self.uid) {
-               self.applying = false;
-               self.applyingResult = true;
-               self.applyText = "正在发言";
-               if (self.hasCamera) {
-                  self.ShowCamera();
+               if (getUrlKey("isOnLive") == 1 || getUrlKey("isOnLive") == "1") {
+                  self.applying = false;
+                  self.applyingResult = true;
+                  self.applyText = "正在发言";
+                  //开启摄像头/桌面
+                  if (self.hasCamera) {
+                     publishOwnFeed('camera');
+                  } else {
+                     publishOwnFeed('desktop');
+                  }
                } else {
-                  self.ShowDesktop();
+                  window.location = location.href + "&isOnLive=1";
                }
             }
          }
@@ -1162,14 +1179,7 @@
 
           //用户收到管理员的停止发言
          window.GetStopSpeech = function (uid) {
-            var ele = $(".member-ul li[data-uid='" + uid + "']");
-            if (ele.length !== 0) {
-               if (!ele.find(".icon-sxt").hasClass("hide")) {
-                  ele.find(".icon-sxt").addClass("hide");
-               }
-            } else {
-               console.log("GetStopSpeech Error! 未找到对应的成员" + uid);
-            }
+            SetIsSpeaking(uid,false);
             if (uid == self.uid) {
                self.ChangeVideoSource("none");
                self.$message({
@@ -1202,7 +1212,6 @@
 
           //用户收到其他用户的新的头像(更新头像使用)
          window.GetNewPhoto = function (data) {
-            var self = this;
               //var ele = $(".member-ul li[data-uid='" + data.uid + "']");
               //if (ele.length !== 0) {
               //    var imag = $(ele).children('img');
@@ -1213,7 +1222,7 @@
                   return n.userId == data.uid;
               });
               if (m != null && m.length == 1) {
-                  m[0].logo = image;
+                  m[0].logo = data.photo;
               }
            }
            //设置为发言状态/  不发言状态
@@ -1222,53 +1231,42 @@
             if (b) {
 
                if (ele.length !== 0) {
-                  if (self.isAdmin) {
-                     if (ele.find(".icon-video1").hasClass("hide")) {
-                        ele.find(".icon-video1").removeClass("hide");
+                   if (ele.find(".icon-sxt").hasClass("hide")) {
+                        ele.find(".icon-sxt").removeClass("hide");
                      }
                      if (ele.find(".icon-gd").hasClass("hide")) {
                         ele.find(".icon-gd").removeClass("hide");
                      }
-                  } else {
-                     if(uid==self.uid){
-                        if (self.applyingResult || self.isOnLive) {
-                           if (ele.find(".icon-video1").hasClass("hide")) {
-                           ele.find(".icon-video1").removeClass("hide");
-                        }
-                        if (ele.find(".icon-gd").hasClass("hide")) {
-                           ele.find(".icon-gd").removeClass("hide");
-                        }//添加到正在发言人的用户后面
-                        ele.fadeOut(10).fadeIn(100);
-                        $(ele).insertAfter($(".member-ul").find("li").eq(0))
-                        }
-                     }else{
-                        if (ele.find(".icon-video1").hasClass("hide")) {
-                           ele.find(".icon-video1").removeClass("hide");
-                        }
-                        if (ele.find(".icon-gd").hasClass("hide")) {
-                           ele.find(".icon-gd").removeClass("hide");
-                        }//添加到正在发言人的用户后面
-                        ele.fadeOut(10).fadeIn(100);
-                        $(ele).insertAfter($(".member-ul").find("li").eq(0))
+                  if (self.creator != uid) {
+                      //管理员不需要添加这个live标记，这个live标记只是用来查询除了管理员以外，打开摄像头的成员
+                     if (!ele.hasClass("live")) {
+                        ele.addClass("live");
                      }
+                     
+                  } else {
+                    //添加到正在发言人的用户后面
+                        ele.fadeOut(10).fadeIn(100);
+                        $(ele).insertAfter($(".member-ul").find("li").eq(0))
                   }
                } else {
                   console.log("更新左侧的发言状态 Error! 未找到对应的成员");
                }
             } else {
+                if (ele.hasClass("live")) {
+                  ele.removeClass("live");
+               }
                if (ele.length !== 0) {
-                  if (!ele.find(".icon-video1").hasClass("hide")) {
-                     ele.find(".icon-video1").addClass("hide");
+                  if (!ele.find(".icon-sxt").hasClass("hide")) {
+                     ele.find(".icon-sxt").addClass("hide");
                   } if (!ele.find(".icon-gd").hasClass("hide")) {
                      ele.find(".icon-gd").addClass("hide");
                   }
-                  if (self.isAdmin) {
-
-                  } else {
+                 if (self.creator != uid) {
                      //添加到正在发言人的用户后面
                      ele.fadeOut(10).fadeIn(100);
-                     $(ele).insertAfter($(".member-ul").find("li").eq(0))
-                  }
+                     var liveCount = $(".member-ul").find("li.live").length;
+                     $(ele).insertAfter($(".member-ul").find("li").eq(liveCount+1));
+                  } 
                } else {
                   console.log("更新左侧的发言状态 Error! 未找到对应的成员");
                }
@@ -1278,18 +1276,12 @@
        methods: {
            //申请发言
            ApplyForSpeech: function () {
-               if (rtc.isPublished_) {
-                   this.$message('您已处于发言状态,无需再次申请');
-                   return;
-               }
-               if (this.applying) {
-                   this.$message('正在申请中，请等待...');
-                   return;
-               }
-            var content = JSON.stringify({ "type": 3, "content": self.uid });
-            sendData(content);
+               if (!this.isOnLive) {
+                var content = JSON.stringify({ "type": 3, "content": {uid:this.uid,realName:this.trueName} });
+                sendData(content);
                this.applying = true;
                this.applyText = "申请中...";
+               }
            },
          //同意发言
          AgreeSpeech: function (uid) {
@@ -1324,8 +1316,8 @@
                if (!ele.find(".icon-gd").hasClass("hide")) {
                   ele.find(".icon-gd").addClass("hide");
                }
-               if (!ele.find(".icon-video1").hasClass("hide")) {
-                  ele.find(".icon-video1").addClass("hide");
+               if (!ele.find(".icon-sxt").hasClass("hide")) {
+                  ele.find(".icon-sxt").addClass("hide");
                }
             } else {
                console.log("DisAgreeSpeech Error! 未找到对应的成员" + uid);
@@ -1341,7 +1333,6 @@
             RemovePlayerElement(uid);
             if (uid == this.uid) {
                //主持人挂断自己       
-               //this.ChangeVideoSource("none");
                unpublishOwnFeed();
             } else {
                //主持人挂断其他用户，其他用户通过收到对应的消息来unpublishOwnFeed自己
@@ -1358,8 +1349,8 @@
                if (!ele.find(".icon-gd").hasClass("hide")) {
                   ele.find(".icon-gd").addClass("hide");
                }
-               if (!ele.find(".icon-video1").hasClass("hide")) {
-                  ele.find(".icon-video1").addClass("hide");
+               if (!ele.find(".icon-sxt").hasClass("hide")) {
+                  ele.find(".icon-sxt").addClass("hide");
                }
             } else {
                console.log("StopSpeech Error! 未找到对应的成员" + uid);
@@ -1373,7 +1364,7 @@
             if (this.isFullScreen) {
                this.ExitFullScreen();
             } else {
-               window.launchFullscreen(document.getElementById("app"));
+               window.launchFullscreen(document.getElementById("appMain"));
             }
          },
          //退出全屏
@@ -1541,8 +1532,7 @@
                      sfutest.send({ "message": body, "jsep": jsep });
                   },
                   error: function (error) {
-                     Janus.error("WebRTC error:", error);
-                     bootbox.alert("WebRTC error... " + JSON.stringify(error));
+                     console.error("WebRTC error... " + JSON.stringify(error));
                   }
                });
 
@@ -1627,10 +1617,13 @@
                             if (self.uid == item.userId) {
                                 self.isAdmin = item.isAdmin;
                             }
+                            if(item.isAdmin){
+                                self.creator=item.userId;
+                            }
                         });
                         //初始化janus
                         CreateJanus();
-                        if (self.isLive == 1)
+                        if (self.isLive == 1)//如果是直播模式
                             self.GetAudienceMembers();
                         //开启扑捉自己头像
                         self.CaptureUserPhoto();
@@ -1644,7 +1637,7 @@
                           setTimeout(function () {
                                 CloseWindow();
                              }, 3000);
-                            alert('您暂无权限访问该视频会议！');
+                            console.error('您暂无权限访问该视频会议！');
                         }
                     }
                 },
@@ -1713,9 +1706,9 @@
             cxt.drawImage(videoPreview, 0, 0, 300,150);
 
               var mycanvas = document.getElementById("canvass");
-              var image = mycanvas.toDataURL("image/png");
+              var image = mycanvas.toDataURL("image/jpeg",0.9);
 
-              var m = self.members.filter(function (n) {
+              var m = this.members.filter(function (n) {
                  return n.userId == self.uid;
               });
               if (m != null && m.length == 1) {
@@ -1900,7 +1893,7 @@
             //挂断
             if (command === "none") {
                if (this.isOnLive) {
-                  rtc.unpublish();
+                  unpublishOwnFeed();
                   this.isOnLive = false;
                   this.applying = false;
                   this.applyingResult = false;
