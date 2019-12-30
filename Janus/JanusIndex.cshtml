@@ -23,6 +23,17 @@
         <el-header class="vh-top clearfix">
             <h1 class="float-l">@(ViewBag.Title + "的视频会议")</h1>
             <div class="float-r">
+                <span v-show="isLive==1">
+                    <el-popover placement="left" width="320" v-model="visibleQRCode">
+                        <p>请扫描下方二维码，进入视频会议</p>
+                        <div style="width: 320px;height: 320px;" id="QRCode">
+
+                        </div>
+                        <el-tooltip slot="reference" content="分享二维码" placement="top">
+                            <i class="bg-icon iconfont icon-shareP"></i>
+                        </el-tooltip>
+                    </el-popover>
+                </span>
                 <span>
                     <el-tooltip content="分享摄像头" placement="top">
                         <i class="bg-icon iconfont icon-sxt" v-show="hasCamera"
@@ -169,9 +180,9 @@
                         <span slot="label">会议观众({{onlineCount_Audience}}/{{audienceMember.length}})</span>
                         <el-scrollbar class="vl-con clearfix">
                             <ul class="audience-ul">
-                                <li v-for="(item, index) in audienceMember" v-bind:data-uid="item.id" v-bind:data-title="item.realName"
+                                <li v-for="(item, index) in audienceMember" v-bind:data-uid="item.userId" v-bind:data-title="item.realName"
                                     class="member-li">
-                                    <img v-bind:src="item.icon" class="head-img mr10" v-cloak>
+                                    <img v-bind:src="item.logo" class="head-img mr10" v-cloak>
                                     <span class="p1" v-bind:title="item.realName" v-cloak>{{item.realName}}</span>
                                     <span class="tab-status"></span>
                             </ul>
@@ -182,16 +193,16 @@
             </div>
             <div class="video-con">
                 <div class="vc-top">
-                    <div class="clearfix lihe-norm" v-if="!(isAdmin || isAudience)">
+                    <!-- 视频窗口 -->
+                    <el-scrollbar class="vm-con clearfix">
+
+                    <div class="clearfix lihe-norm" v-if="!(isAdmin && isAudience)">
                         <div class="float-l tab-group-v">
                             <button class="btn-blue change-btn" v-on:click="ApplyForSpeech" v-cloak>{{applyText}}</button>
                         </div>
                         <p v-if="!isChrome" style="line-height:30px;margin-left:100px;">建议使用Chrome浏览器</p>
                     </div>
 
-
-                    <!-- 视频窗口 -->
-                    <el-scrollbar class="vm-con clearfix">
                         <div class="vct-top" id="videos-container"></div>
                     </el-scrollbar>
                 </div>
@@ -249,6 +260,8 @@
 <script src="~/Content/VideoMeeting/js/vue-resource.js"></script>
 
 <script src="~/Content/VideoMeeting/js/date.js"></script>
+<!-- 引入二维码组件 -->
+<script src="~/Content/VideoMeeting/js/jquery.qrcode.min.js"></script>
 <!-- 引入Janus组件库 -->
 <script type="text/javascript" src="~/Content/VideoMeeting/Janus/js/adapter.js"></script>
 <script type="text/javascript" src="~/Content/VideoMeeting/Janus/js/janus.js"></script>
@@ -266,6 +279,7 @@
       el: '#app',
       data: function () {
          return {
+            visibleQRCode:false,//二维码显示
             initialize: false,//默认初始化是没完成的
             isChrome: false,//是否是Chrome浏览器
             applyingResult: false,//申请发言的结果
@@ -318,6 +332,41 @@
       },
        created: function () {
            var self = this;
+
+
+            //生成二维码方法
+            function toUtf8(str) {
+                var out, i, len, c;
+                out = "";
+                len = str.length;
+                for (i = 0; i < len; i++) {
+                c = str.charCodeAt(i);
+                if ((c >= 0x0001) && (c <= 0x007F)) {
+                    out += str.charAt(i);
+                } else if (c > 0x07FF) {
+                    out += String.fromCharCode(0xE0 | ((c >> 12) & 0x0F));
+                    out += String.fromCharCode(0x80 | ((c >> 6) & 0x3F));
+                    out += String.fromCharCode(0x80 | ((c >> 0) & 0x3F));
+                } else {
+                    out += String.fromCharCode(0xC0 | ((c >> 6) & 0x1F));
+                    out += String.fromCharCode(0x80 | ((c >> 0) & 0x3F));
+                }
+                }
+                return out;
+            }
+
+            //生成二维码---start---
+            var str = toUtf8("https://oaokcs.cnki.net/Live/MeetRtc/ShareMeeting?mid="+"@ViewBag.cid");
+
+            $("#QRCode").qrcode({
+                render: "table",
+                width: 320,
+                height: 320,
+                text: str
+            });
+            //生成二维码---end---
+
+
            var server = "wss://rtc.cnki.net/janus";
            window.janus = null;
            window.sfutest = null;
@@ -594,6 +643,7 @@
                                UserOnline(self.uid);
                                SetIsSpeaking(self.uid, true);
                                self.liveType = type;
+                               self.isOnLive = true;
                            },
                            error: function (error) {
                                console.error("WebRTC error:", error);
@@ -615,6 +665,7 @@
                                UserOnline(self.uid);
                                SetIsSpeaking(self.uid, true);
                                self.liveType = type;
+                               self.isOnLive = true;
                            },
                            error: function (error) {
                                console.error("WebRTC error:", error);
@@ -631,6 +682,7 @@
                                sfutest.send({ "message": publish, "jsep": jsep });
                                UserOnline(self.uid);
                                self.liveType = type;
+                               self.isOnLive = false;
                            },
                            error: function (error) {
                                console.error("WebRTC error:", error);
@@ -1197,6 +1249,7 @@
              });
              if (audience != null && audience.length == 1) {
                  //已经是观众，不用再调用添加
+                self.onlineCount_Audience++;
              }
              else {
                  self.audienceMember.unshift(data);
@@ -1621,23 +1674,30 @@
                                 self.creator=item.userId;
                             }
                         });
-                        //初始化janus
-                        CreateJanus();
-                        if (self.isLive == 1)//如果是直播模式
-                            self.GetAudienceMembers();
-                        //开启扑捉自己头像
-                        self.CaptureUserPhoto();
-                    } else {
-                        //如果返回为false，那么表示其并不是会议成员，再根据会议的属性【是否直播】去判断该用户是否可以观看会议
-                        if (self.isLive == 1) {
-                            //直播模式
-                            self.isAudience = true;
-                            self.GetAudienceMembers();
-                        } else {
-                          setTimeout(function () {
-                                CloseWindow();
-                             }, 3000);
-                            console.error('您暂无权限访问该视频会议！');
+
+
+                        if(result.Message){
+                            //群组成员                            
+                            //初始化janus
+                            CreateJanus();
+                            if (self.isLive == 1)//如果是直播模式
+                                self.GetAudienceMembers();
+                            //开启扑捉自己头像
+                            self.CaptureUserPhoto();
+
+                        }else{
+                            //观众成员
+                            //根据会议的属性【是否直播】去判断该用户是否可以观看
+                            if (self.isLive == 1) {
+                                //直播模式
+                                self.isAudience = true;
+                                self.GetAudienceMembers();
+                            } else {
+                            setTimeout(function () {
+                                    CloseWindow();
+                                }, 3000);
+                                alert('您暂无权限访问该视频会议！');
+                            }
                         }
                     }
                 },
@@ -1653,7 +1713,7 @@
                 dataType: "json",   //返回格式为json
                 type: "get",   //请求方式
                 success: function (result) {
-                    if (result.Success && result.Content.length!=0) {
+                    if (result.Success) {
                         self.audienceMember = result.Content.slice(0);
                         if (self.isAudience) {
                             //初始化janus

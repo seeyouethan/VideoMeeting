@@ -18,47 +18,58 @@
       <el-header class="vh-top clearfix">
          <h1 class="float-l">TRTC本地测试Demo01</h1>
          <div class="float-r">
+            <span>
+               <el-popover placement="left" width="320" v-model="visibleQRCode">
+                  <p>请扫描下方二维码，进入视频会议</p>
+                  <div style="width: 320px;height: 320px;" id="QRCode">
 
-            <span>
-               <el-tooltip content="分享摄像头" placement="top">
-                  <i class="bg-icon iconfont icon-sxt" v-bind:class="" v-show="hasCamera"
-                     v-on:click="ChangeVideoSource('camera')"></i>
-               </el-tooltip>
+                  </div>
+                  <el-tooltip slot="reference" content="分享二维码" placement="top">
+                     <i class="bg-icon iconfont icon-shareP"></i>
+                  </el-tooltip>
+               </el-popover>
             </span>
             <span>
-               <el-tooltip content="共享屏幕" placement="top">
-                  <i class="bg-icon iconfont icon-pm" v-bind:class="" v-on:click="ChangeVideoSource('desktop')"></i>
-               </el-tooltip>
-            </span>
-            <span>
-               <el-tooltip content="设置" placement="top">
-                  <i class="bg-icon iconfont icon-set" v-on:click="ShowSettingDialog"></i>
-               </el-tooltip>
-            </span>
-            <span>
-               <el-tooltip v-bind:content="resharpMessage" placement="top">
-                  <i class="bg-icon iconfont" v-bind:class="isFocused?'icon-wg':'icon-zcr'"
-                     v-on:click="resharpElement()"></i>
-               </el-tooltip>
-            </span>
-            <span>
-               <el-tooltip content="协同研讨" placement="top">
-                  <i class="bg-icon iconfont icon-discuss" v-on:click="OpenOrCreateDiscuss()"></i>
-               </el-tooltip>
-            </span>
-            <span>
-               <el-tooltip v-bind:content="screenModel?'电脑模式':'大屏模式'" placement="top">
-                  <i class="bg-icon iconfont" v-bind:class="screenModel?'icon-dpc':'icon-pc'"
-                     v-on:click="screenModel=!screenModel"></i>
-               </el-tooltip>
-            </span>
-            <span>
-               <el-tooltip content="全屏" placement="top">
-                  <i class="bg-icon iconfont"
-                     v-bind:class="{ 'icon-fullScreen': !isFullScreen,'icon-exitFullSrceen': isFullScreen }"
-                     v-on:click="FullScreen"></i>
-               </el-tooltip>
-            </span>
+               <span>
+                  <el-tooltip content="分享摄像头" placement="top">
+                     <i class="bg-icon iconfont icon-sxt" v-bind:class="" v-show="hasCamera"
+                        v-on:click="ChangeVideoSource('camera')"></i>
+                  </el-tooltip>
+               </span>
+               <span>
+                  <el-tooltip content="共享屏幕" placement="top">
+                     <i class="bg-icon iconfont icon-pm" v-bind:class="" v-on:click="ChangeVideoSource('desktop')"></i>
+                  </el-tooltip>
+               </span>
+               <span>
+                  <el-tooltip content="设置" placement="top">
+                     <i class="bg-icon iconfont icon-set" v-on:click="ShowSettingDialog"></i>
+                  </el-tooltip>
+               </span>
+               <span>
+                  <el-tooltip v-bind:content="resharpMessage" placement="top">
+                     <i class="bg-icon iconfont" v-bind:class="isFocused?'icon-wg':'icon-zcr'"
+                        v-on:click="resharpElement()"></i>
+                  </el-tooltip>
+               </span>
+               <span>
+                  <el-tooltip content="协同研讨" placement="top">
+                     <i class="bg-icon iconfont icon-discuss" v-on:click="OpenOrCreateDiscuss()"></i>
+                  </el-tooltip>
+               </span>
+               <span>
+                  <el-tooltip v-bind:content="screenModel?'电脑模式':'大屏模式'" placement="top">
+                     <i class="bg-icon iconfont" v-bind:class="screenModel?'icon-dpc':'icon-pc'"
+                        v-on:click="screenModel=!screenModel"></i>
+                  </el-tooltip>
+               </span>
+               <span>
+                  <el-tooltip content="全屏" placement="top">
+                     <i class="bg-icon iconfont"
+                        v-bind:class="{ 'icon-fullScreen': !isFullScreen,'icon-exitFullSrceen': isFullScreen }"
+                        v-on:click="FullScreen"></i>
+                  </el-tooltip>
+               </span>
          </div>
       </el-header>
       <!-- 主体内容 -->
@@ -252,6 +263,7 @@
 <script src="../TRTC/js/adapter.js"></script>
 <script src="../js/vue-infinite-loading.js"></script>
 <script src="../js/date.js"></script>
+<script src="../js/jquery.qrcode.min.js"></script>
 
 
 <script src="../TRTC/js/popper.js"></script>
@@ -277,6 +289,7 @@
       el: '#app',
       data: function () {
          return {
+            visibleQRCode: false,
             initialize: false,//默认初始化是没完成的
             isChrome: false,//是否是Chrome浏览器
             applyingResult: false,//申请发言的结果
@@ -322,6 +335,37 @@
       },
       created: function () {
          var self = this;
+         function toUtf8(str) {
+            var out, i, len, c;
+            out = "";
+            len = str.length;
+            for (i = 0; i < len; i++) {
+               c = str.charCodeAt(i);
+               if ((c >= 0x0001) && (c <= 0x007F)) {
+                  out += str.charAt(i);
+               } else if (c > 0x07FF) {
+                  out += String.fromCharCode(0xE0 | ((c >> 12) & 0x0F));
+                  out += String.fromCharCode(0x80 | ((c >> 6) & 0x3F));
+                  out += String.fromCharCode(0x80 | ((c >> 0) & 0x3F));
+               } else {
+                  out += String.fromCharCode(0xC0 | ((c >> 6) & 0x1F));
+                  out += String.fromCharCode(0x80 | ((c >> 0) & 0x3F));
+               }
+            }
+            return out;
+         }
+
+         //生成二维码
+         var str = toUtf8("http://localhost/Videomeeting/trtc/index.html");
+
+         $("#QRCode").qrcode({
+            render: "table",
+            width: 320,
+            height: 320,
+            text: str
+         });
+
+
          //判断浏览器
          TRTC.checkSystemRequirements().then(result => {
             if (!result) {
@@ -540,18 +584,18 @@
          window.GetApplyForSpeech = function (uid, realName) {
             if (self.isAdmin) {
                var ele = $(".member-ul li[data-uid='" + uid + "']");
-            if (ele.length !== 0) {
-               if (ele.find(".icon-yes").hasClass("hide")) {
-                  ele.find(".icon-yes").removeClass("hide");
-               }
-               if (ele.find(".icon-no").hasClass("hide")) {
-                  ele.find(".icon-no").removeClass("hide");
-               }
-               ele.fadeOut(100).fadeIn(100);
+               if (ele.length !== 0) {
+                  if (ele.find(".icon-yes").hasClass("hide")) {
+                     ele.find(".icon-yes").removeClass("hide");
+                  }
+                  if (ele.find(".icon-no").hasClass("hide")) {
+                     ele.find(".icon-no").removeClass("hide");
+                  }
+                  ele.fadeOut(100).fadeIn(100);
                   $(ele).insertAfter($(".member-ul").find("li").eq(0))
-            } else {
-               console.log("GetApplyForSpeech Error! 未找到对应的成员" + uid);
-            }
+               } else {
+                  console.log("GetApplyForSpeech Error! 未找到对应的成员" + uid);
+               }
 
 
                // self.$confirm(realName + '请求发言', '提示', {

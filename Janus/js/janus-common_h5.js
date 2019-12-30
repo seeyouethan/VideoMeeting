@@ -19,75 +19,7 @@ function CreatePlayerElement(config) {
     mediaElementContainer.className = 'vctb-item';
     mediaElementContainer.setAttribute('data-uid', uid);
     mediaElementContainer.setAttribute('id', "div_" + uid);
-    var mediaControls = document.createElement('div');
-    mediaControls.className = 'media-controls vctt-r ';
-    //静音标签
-    var muteAudio = document.createElement('i');
-    muteAudio.className = 'iconfont icon-yy ';
-    muteAudio.setAttribute('title', "静音");
-    mediaControls.appendChild(muteAudio);
-    muteAudio.onclick = function () {
-        if (muteAudio.className.indexOf('icon-yyG') != -1) {
-            muteAudio.className = muteAudio.className.replace('icon-yyG', 'icon-yy');
-            muteAudio.setAttribute('title', "静音");
-            if (config.unmuteAudio) { config.unmuteAudio(); } else {
-                document.getElementById(config.videoid).muted = false;
-                document.getElementById(config.videoid).volume = 1;
-            }
-        } else {
-            muteAudio.className = muteAudio.className.replace('icon-yy', 'icon-yyG');
-            muteAudio.setAttribute('title', "取消静音");
-            if (config.muteAudio) { config.muteAudio(); } else {
-                document.getElementById(config.videoid).muted = true;
-                document.getElementById(config.videoid).volume = 0;
-            }
-        }
-    }
-    //静音视频流标签
-    var muteVideo = document.createElement('i');
-    muteVideo.className = 'iconfont icon-videoImg';
-    muteVideo.setAttribute('title', "暂停");
-    mediaControls.appendChild(muteVideo);
-    muteVideo.onclick = function () {
-        if (muteVideo.className.indexOf('icon-videoImgNo') != -1) {
-            muteVideo.className = muteVideo.className.replace('icon-videoImg icon-videoImgNo', 'icon-videoImg');
-            muteVideo.setAttribute('title', "暂停");
-            if (config.unmuteVideo) { config.unmuteVideo(); } else {
-                document.getElementById(config.videoid).play();
-            }
-        } else {
-            muteVideo.className = muteVideo.className.replace('icon-videoImg', 'icon-videoImg icon-videoImgNo');
-            muteVideo.setAttribute('title', "播放");
-            if (config.muteVideo) { config.muteVideo(); } else {
-                document.getElementById(config.videoid).pause();
-            }
-        }
-    };
-    if (config.gdVideo) {
-        //挂断标签  
-        var gdVideo = document.createElement('i');
-        gdVideo.className = 'iconfont icon-gd';
-        gdVideo.setAttribute('title', "挂断");
-        mediaControls.appendChild(gdVideo);
-        gdVideo.onclick = function () {
-            config.gdVideo();
-        };
-    }
-    //全屏标签
-    var zoom = document.createElement('i');
-    zoom.className = 'iconfont icon-fullScreen ';
-    zoom.setAttribute('title', "全屏");
-    zoom.onclick = function () {
-        if (zoom.className.indexOf('icon-exitFullSrceen') != -1) {
-            zoom.className = zoom.className.replace('icon-exitFullSrceen', 'icon-fullScreen');
-            //exitFullScreen();
-            //暂时没用到退出全屏功能，直接使用了esc按键
-        } else {
-            //zoom.className = zoom.className.replace('icon-fullScreen', 'icon-exitFullSrceen');
-            launchFullscreen(document.getElementById(config.videoid));
-        }
-    };
-    mediaControls.appendChild(zoom);
+    
     //姓名标签和右下角的功能标签
     var mediaBox = document.createElement('div');
     mediaBox.className = 'media-box';
@@ -102,7 +34,6 @@ function CreatePlayerElement(config) {
     }
     h2.className = 'video-title';
     mediaBox.appendChild(h2);
-    mediaBox.appendChild(mediaControls);
     mediaElementContainer.style.width = width + "px";
     mediaElementContainer.style.height = width * 3 / 4 + 6 + "px";
     //video标签

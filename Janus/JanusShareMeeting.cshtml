@@ -1,0 +1,698 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>@(ViewBag.Title + "的视频会议")</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="~/Content/VideoMeeting/css/Element-UI/index.css">
+    <link rel="stylesheet" type="text/css" href="~/Content/VideoMeeting/css/iconfont.css">
+    <link rel="stylesheet" type="text/css" href="~/Content/VideoMeeting/css/style.css">
+    <link rel="stylesheet" type="text/css" href="~/Content/VideoMeeting/Janus/css/janus.css" />
+    <link rel="stylesheet" type="text/css" href="~/Content/VideoMeeting/Janus/css/toastify.min.css">
+    <link rel="stylesheet" type="text/css" href="~/Content/VideoMeeting/Janus/css/style.css">
+</head>
+<div id="app" v-bind:class="screenModel?'main-tab':''">
+    <el-container>
+        <!-- 顶部 -->
+        <el-header class="vh-top clearfix">
+            <h1 class="float-l">@(ViewBag.Title + "的视频会议")</h1>
+            
+        </el-header>
+        <!-- 主体内容 -->
+        <el-main class="v-main" id="appMain">
+            <div class="video-con">
+                <div class="vc-top">  
+                    <el-scrollbar class="vm-con clearfix">
+                        <div class="vct-top" id="videos-container"></div>
+                    </el-scrollbar>
+                </div>
+            </div>            
+        </el-main>        
+    </el-container>
+    
+</div>
+
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<!-- 引入vue组件库 -->
+<script src="~/Content/VideoMeeting/js/vue.js"></script>
+<script src="~/Content/VideoMeeting/js/index.js"></script>
+<script src="~/Content/VideoMeeting/js/vue-resource.js"></script>
+
+<script src="~/Content/VideoMeeting/js/date.js"></script>
+<!-- 引入Janus组件库 -->
+<script type="text/javascript" src="~/Content/VideoMeeting/Janus/js/adapter.js"></script>
+<script type="text/javascript" src="~/Content/VideoMeeting/Janus/js/janus.js"></script>
+<script type="text/javascript" src="~/Content/VideoMeeting/Janus/js/janus-common_h5.js"></script>
+<script src="~/Content/VideoMeeting/js/vue-infinite-loading.js"></script>
+
+
+
+
+<script>
+   Vue.http.options.root = 'https://oaokcs.cnki.net';
+   Vue.http.headers.common['ignore-identity'] = "true";//调用相关接口的是时候，绕过验证
+
+   new Vue({
+      el: '#app',
+      data: function () {
+         return {
+            isAdmin: false,//是否是管理员标记
+            members: [], //群组成员数组
+            uid: "@ViewBag.uid", //当前用户的userid
+            trueName: "@ViewBag.trueName", //当前用户的真实姓名
+            conferenceId: "@ViewBag.cid", //当前视频会议id
+            roomId:@ViewBag.roomId,
+            audioinputList: [],//音频设备
+            screenModel: false,//大屏模式开关
+            members: [], //群组成员数组
+            audienceMember: [],//观众成员
+            isLive:@ViewBag.type,//是否直播，这里用int表示，1表示是，0 表示否，对应DiscussionMeet中的Type字段
+            isAudience: false,//是否是观众，进入到直播间，不是会议成员则是普通观众，观众信息存放在redis中
+            remoteFeeds: [],//其他在线用户集合
+            creator:'',//群组管理员
+         }
+      },
+       created: function () {
+           var self = this;
+           var server = "wss://rtc.cnki.net/janus";
+           window.janus = null;
+           window.sfutest = null;
+           window.opaqueId = "videoroom-" + self.conferenceId;
+           window.mypvtid = null;          
+
+           window.CreateJanus = function () {
+               Janus.init({
+                   debug: "all",
+                   callback: function () {
+                       if (!Janus.isWebrtcSupported()) {
+                           alert("您的浏览器不支持WebRTC，请在浏览器中打开该页面。");
+                           return;
+                       }
+                       janus = new Janus(
+                           {
+                               server: server,
+                               iceServers: [{ urls: "stun:www.385073012.cn:3478" }, { urls: "turn:www.385073012.cn:3478", username: "cnki", credential: "123456" }],
+                               success: function () {
+                                   janus.attach(
+                                       {
+                                           plugin: "janus.plugin.videoroom",
+                                           opaqueId: opaqueId,
+                                           success: function (pluginHandle) {
+                                               sfutest = pluginHandle;                                               
+                                                createRoom();
+                                           },
+                                           error: function (error) {
+                                               console.error("  -- Error attaching plugin...", error);
+                                               console.error("Error attaching plugin... " + error);
+                                           },
+                                           consentDialog: function (on) {
+                                               Janus.debug("Consent dialog should be " + (on ? "on" : "off") + " now");
+                                           },
+                                           mediaState: function (medium, on) {
+                                               Janus.log("Janus " + (on ? "started" : "stopped") + " receiving our " + medium);
+                                           },
+                                           webrtcState: function (on) {
+                                               if (!on) {
+                                                   //加載中...
+                                                   return;
+                                               }
+
+                                           },
+                                           onmessage: function (msg, jsep) {
+                                               //查看房间创建房间信息
+                                               var event = msg["videoroom"];
+                                               if (event != undefined && event != null) {
+                                                   if (event === "joined") {
+                                                       //自己加入了房间
+                                                       myid = msg["display"];
+                                                       mypvtid = msg["private_id"];
+                                                       publishOwnFeed('none');       
+                                                       //这里的publishers表示已经在这个房间中的成员
+                                                       if (msg["publishers"] !== undefined && msg["publishers"] !== null) {
+                                                           var list = msg["publishers"];
+                                                           for (var f in list) {
+                                                               var id = list[f]["id"];
+                                                               var display = list[f]["display"];//这里存的是我们要用的uid
+                                                               var audio = list[f]["audio_codec"];
+                                                               var video = list[f]["video_codec"];
+                                                               newRemoteFeed(id, display, audio, video);
+                                                           }
+                                                       }
+                                                   } else if (event === "destroyed") {
+                                                       // The room has been destroyed
+                                                       console.warn("The room has been destroyed!");
+                                                       console.error("The room has been destroyed", function () {
+                                                           window.location.reload();
+                                                       });
+                                                   } else if (event === "event") {
+                                                       if (msg["publishers"] !== undefined && msg["publishers"] !== null) {
+                                                           //别人加入了房间会来到这个方法  算是一个监听
+                                                           var list = msg["publishers"];
+                                                           for (var f in list) {
+                                                               var id = list[f]["id"];
+                                                               var display = list[f]["display"];//这个是真正的uid
+                                                               var audio = list[f]["audio_codec"];
+                                                               var video = list[f]["video_codec"];
+                                                               newRemoteFeed(id, display, audio, video);
+                                                           }
+                                                       } else if ((msg["leaving"] !== undefined && msg["leaving"] !== null)) {
+                                                           var leaving = msg["leaving"];//要离开的用户的id  并不是真的uid 真的uid是存放在display中的
+                                                           var remoteFeed = null;
+                                                           //遍历下远端feeds
+                                                           var index = self.remoteFeeds.findIndex(item => {
+                                                               if (item.rfid == leaving) {
+                                                                   return true;
+                                                               }
+                                                           })
+                                                           if (index != -1) {
+                                                               remoteFeed = self.remoteFeeds[index];
+                                                               if (remoteFeed != null) {
+                                                                   RemovePlayerElement(remoteFeed.display)
+                                                                   remoteFeed.detach();
+                                                                   self.remoteFeeds.splice(index, 1)
+                                                               }
+                                                           }
+                                                       }
+                                                       else if (msg["unpublished"] !== undefined && msg["unpublished"] !== null) {
+                                                           //leaving和unpublished都会导致无法收到文字消息
+                                                           var leaving = msg["unpublished"];//要离开的用户的id 并不是真的uid 真的uid是存放在display中的
+                                                           var remoteFeed = null;
+                                                           //遍历下远端feeds
+                                                           var index = self.remoteFeeds.findIndex(item => {
+                                                               if (item.rfid == leaving) {
+                                                                   return true;
+                                                               }
+                                                           })
+                                                           if (index != -1) {
+                                                               remoteFeed = self.remoteFeeds[index];
+                                                               if (remoteFeed != null) {
+                                                                   RemovePlayerElement(remoteFeed.display)
+                                                                   //remoteFeed.detach();
+                                                                   //去掉摄像头标志
+                                                               }
+                                                           }
+                                                       }
+
+                                                   }
+                                               }
+                                               if (jsep !== undefined && jsep !== null) {
+                                                   sfutest.handleRemoteJsep({ jsep: jsep });
+                                               }
+                                           },
+                                           onlocalstream: function (stream) {
+
+                                           },
+                                           ondataopen: function (data) {
+
+                                           },
+                                           ondata: function (data) {
+
+                                           },
+                                           onremotestream: function (stream) {
+
+                                           },
+                                           oncleanup: function () {
+                                               Janus.log(" ::: Got a cleanup notification: we are unpublished now :::");
+                                           }
+                                       });
+                               },
+                               error: function (error) {
+                                   console.error(error);
+
+                               },
+                               destroyed: function () {
+                                   window.location.reload();
+                               }
+                           });
+                   }
+               });
+
+
+           }
+
+           window.publishOwnFeed = function (type) {
+               if (type == 'camera') {
+                   //分享摄像头
+                   sfutest.createOffer(
+                       {
+                           media: {
+                               audioRecv: false, videoRecv: false, audioSend: true, videoSend: true, data: true,
+                               replaceVideo: true,
+                               replaceAudeo: true,
+                           },	// Publishers are sendonly
+                           success: function (jsep) {
+                               var publish = { "request": "configure", "audio": true, "video": true, "data": true, };
+                               sfutest.send({ "message": publish, "jsep": jsep });
+                           },
+                           error: function (error) {
+                               console.error("WebRTC error:", error);
+
+                           }
+                       });
+               } else if (type == 'desktop') {
+                   //分享桌面
+                   sfutest.createOffer(
+                       {
+                           media: {
+                               audioRecv: false, videoRecv: false, audioSend: true, videoSend: true, data: true, captureDesktopAudio: true, "video": "screen",
+                               replaceVideo: true,
+                               replaceAudeo: true,
+                           },
+                           success: function (jsep) {
+                               var publish = { "request": "configure", "audio": true, "video": true, "data": true };
+                               sfutest.send({ "message": publish, "jsep": jsep });
+                               self.liveType = type;
+                           },
+                           error: function (error) {
+                               console.error("WebRTC error:", error);
+
+                           }
+                       });
+               } else if (type == 'none') {
+                   //只观看，什么都不分享
+                   sfutest.createOffer(
+                       {
+                           media: { audioRecv: false, videoRecv: false, audioSend: false, videoSend: false, data: true, },
+                           success: function (jsep) {
+                               var publish = { "request": "configure", "audio": true, "video": true, "data": true };
+                               sfutest.send({ "message": publish, "jsep": jsep });
+                           },
+                           error: function (error) {
+                               console.error("WebRTC error:", error);
+                           }
+                       });
+               }
+
+           }
+           window.createRoom = function () {
+               //创建房间
+               var body = { "request": "create", "room": self.roomId, "publishers": 100, "bitrate": 2*1024 * 1024, "bitrate_cap": true, };
+               sfutest.send({
+                   "message": body,
+                   success: function (result) {
+                       //加入房间，若房间已经存在，则直接加入
+                       var register = { "request": "join", "room": self.roomId, "ptype": "publisher", "display": self.uid };
+                       sfutest.send({ "message": register });
+                   }
+               })
+           }
+           //
+           window.newRemoteFeed = function (id, uid, audio, video) {
+               var remoteFeed = null;
+               janus.attach(
+                   {
+                       plugin: "janus.plugin.videoroom",
+                       opaqueId: opaqueId,
+                       success: function (pluginHandle) {
+                           remoteFeed = pluginHandle;
+                           remoteFeed.simulcastStarted = false;
+                           var subscribe = { "request": "join", "room": self.roomId, "ptype": "subscriber", "feed": id, "private_id": mypvtid };
+                           if (Janus.webRTCAdapter.browserDetails.browser === "safari" &&
+                               (video === "vp9" || (video === "vp8" && !Janus.safariVp8))) {
+                               if (video)
+                                   video = video.toUpperCase()
+                               subscribe["offer_video"] = false;
+                           }
+                           remoteFeed.videoCodec = video;
+                           remoteFeed.send({ "message": subscribe });
+                       },
+                       error: function (error) {
+                           console.error("  -- Error attaching plugin...", error);
+                           console.error("Error attaching plugin... " + error);
+                       },
+                       onmessage: function (msg, jsep) {
+                           var event = msg["videoroom"];
+                           if (msg["error"] !== undefined && msg["error"] !== null) {
+                               console.error(msg["error"]);
+                           } else if (event != undefined && event != null) {
+                               if (event === "attached") {
+                                   remoteFeed.rfid = msg['id'];
+                                   remoteFeed.display = uid;
+                                   //遍历下远端feeds
+                                   var index = self.remoteFeeds.findIndex(item => {
+                                       if (item.display == uid) {
+                                           return true;
+                                       }
+                                   })
+                                   if (index !== -1) {
+                                       self.remoteFeeds.splice(index, 1);
+                                   }
+                                   self.remoteFeeds.push(remoteFeed);
+                                   if (audio != null || video != null) {
+                                   }
+                               } else if (event === "event") {
+                               } else {
+                               }
+                           }
+                           if (jsep !== undefined && jsep !== null) {
+                               // Answer and attach
+                               remoteFeed.createAnswer(
+                                   {
+                                       jsep: jsep,
+                                       media: { audioSend: false, videoSend: false, data: true },
+                                       success: function (jsep) {
+                                           var body = { "request": "start", "room": self.roomId };
+                                           remoteFeed.send({ "message": body, "jsep": jsep });
+                                       },
+                                       error: function (error) {
+                                           console.error("WebRTC error:", error);
+                                           console.error("WebRTC error... " + JSON.stringify(error));
+                                       }
+                                   });
+                           }
+                       },
+                       ondataopen: function (data) {
+
+                       },
+                       ondata: function (data) {
+                           //收到消息
+                           //在这里收到其他人的消息
+                           var obj = JSON.parse(data);
+                           var content = JSON.parse(obj.text);
+                           /*
+                              0 表示聊天消息
+                              1 表示当前正在分享用户个数的消息 暂时没用到了,已经移除了此类消息
+                              2 表示xxx用户离线的消息 暂时没用到了,已经移除了此类消息
+                              3 表示xxx用户申请发言
+                              4 表示主持人同意发言
+                              5 表示主持人拒绝发言
+                              6 表示xxx用户停止发言
+                              7 表示新的观众
+                              8 表示新的用户头像
+                           */
+                           if (content.type === 0) {
+                               //聊天消息
+                               //GetMessage(content.content);
+                           }
+                           else if (content.type === 1) {
+                               //当前正在分享用户个数的消息 暂时没用到了
+                               //SetOnLiveUserList(content.content);
+                           }
+                           else if (content.type === 2) {
+                               //离线消息
+                               //UserOffline(event.userid)
+                               var mediaElement = document.getElementById(event.userid);
+                               if (mediaElement) {
+                                   mediaElement.parentNode.removeChild(mediaElement);
+                               }
+                           } else if (content.type === 3) {
+                               //申请发言
+                               //GetApplyForSpeech(content.content)
+                           } else if (content.type === 4) {
+                               //同意发言
+                               //GetAgreeSpeech(content.content)
+                           } else if (content.type === 5) {
+                               //拒绝发言
+                               //GetDisAgreeSpeech(content.content)
+                           } else if (content.type === 6) {
+                               //xxx发言被挂断
+                              // GetStopSpeech(content.content)
+                           }else if (content.type === 7) {
+                               //新的观众
+                               //GetNewAudience(content.content)
+                           }else if (content.type === 8) {
+                               //xxx发言被挂断
+                               //GetNewPhoto(content.content)
+                           }
+                       },
+                       webrtcState: function (on) {
+                       },
+                       onlocalstream: function (stream) {
+                       },
+                       onremotestream: function (stream) {
+
+
+                           stream.oninactive = function (event) {
+                               RemovePlayerElement(uid);
+                               return false;
+                           };
+
+                           var videoMembewr =self.members.filter(function (n) {
+                                return n.userId == uid;
+                            });
+                           
+                            self.audienceMember.filter(function (n) {
+                                return n.userId == self.uid;
+                            });
+
+                           var config = {
+                               uid: uid,//远端用户id
+                               videoid: 'video_' + uid,//生成的video的id
+                               realName: videoMembewr[0].realName,//真实姓名
+                               muteAudio: null,//静音方法
+                               unmuteAudio: null,//静音静音方法
+                               muteVideo: null,//关闭视频方法
+                               unmuteVideo: null,//取消关闭视频方法
+                               gdVideo: null,//挂断图标对应的挂断方法
+                           };
+                           var mediaElement = CreatePlayerElement(config);
+                           Janus.attachMediaStream(mediaElement, stream);
+                           self.resharpElement();
+
+                       },
+
+                       oncleanup: function () {
+
+                       }
+                   });
+           }
+
+
+           window.addStreamStopListener = function (stream, callback) {
+               stream.addEventListener('ended', function () {
+                   callback();
+                   callback = function () { };
+               }, false);
+               stream.addEventListener('inactive', function () {
+                   callback();
+                   callback = function () { };
+               }, false);
+               stream.getTracks().forEach(function (track) {
+                   track.addEventListener('ended', function () {
+                       callback();
+                       callback = function () { };
+                   }, false);
+                   track.addEventListener('inactive', function () {
+                       callback();
+                       callback = function () { };
+                   }, false);
+               });
+           }
+
+           //发送聊天消息
+           window.sendData = function (content) {
+               /*
+                    0 表示聊天消息
+                    1 表示当前正在分享用户个数的消息
+                    2 表示xxx用户离线的消息
+                    3 表示xxx用户申请发言
+                    4 表示主持人同意发言
+                    5 表示主持人拒绝发言
+                    6 表示xxx用户停止发言
+                    7 表示新的观众
+                    8 表示新的用户头像
+                */
+
+               var message = {
+                   textroom: "message",//表示发送的是message类型
+                   transaction: "message",//暂时未用到，可能包含在回调中
+                   room: self.roomId,
+                   text: content,
+               };
+               sfutest.data({
+                   text: JSON.stringify(message),
+                   error: function (reason) { console.error(reason); },
+                   success: function () {
+                   }
+               });
+           }
+           //检测到网络发生变化时，重新进行ICE协商
+           window.netChange = function () {
+               sfutest.createOffer({
+                   iceRestart: true,
+                   media: { data: true },
+                   success: function (jsep) {
+                       echotest.send({ message: { audio: true, video: true }, jsep: jsep });
+                   }
+               });
+           }
+           //当前用户id
+           window.uid = self.uid;
+
+           //获取是否是主持人模式状态
+           window.getFocusedStatus = function () {
+               return self.isFocused;
+           }
+
+           window.GetFocusedWidthHeight = function () {
+               var width = $("#videos-container").width() - 16;
+               //根据宽度，获取对应的4:3的高度
+               var height = width * 3 / 4 + 6;
+               return { height: height, width: width };
+           }
+
+           window.GetFocusedWidthHeightDown = function () {
+               var width = $("#videos-container").width() / 3 - 18;
+               var height = width * 3 / 4 + 6;
+               return { height: height, width: width };
+           }
+
+           window.GetOverLayedWidthHeight = function () {
+               var width = $("#videos-container").width() / 2 - 14;
+               var height = width * 3 / 4 + 6;
+               return { height: height, width: width };
+           }
+           //关闭当前窗口函数，后面会调用
+           window.CloseWindow = function () {
+               var userAgent = navigator.userAgent;
+               if (userAgent.indexOf("Firefox") != -1 || userAgent.indexOf("Chrome") != -1) {
+                   location.href = "about:blank";
+               } else {
+                   window.opener = null;
+                   window.open('', '_self');
+               }
+               window.close();
+           };
+
+
+        
+
+         //设置为焦点
+         window.SetFocus = function (uid) {
+            //1.获取到div   2.放到第一个   3.宽度修改
+            var ele = document.getElementById("div_" + uid);
+            var eleOld = document.getElementById("videos-container").firstChild;
+            if ($(eleOld).attr("data-uid") === uid && self.isFocused) {
+               //点击了已经处于焦点的视频
+               return;
+            } else {
+               self.isFocused = true;
+               //移动ele到第一位
+               $(ele).prependTo("#videos-container");
+               self.resharpElementFocus();
+            }
+         }
+         //左侧请求群组成员
+         this.GetGroupMembers();
+
+      },
+       methods: {
+         //请求会议成员接口 get 同时判断自己是否是该会议成员，如果不是，则关闭窗口
+         GetGroupMembers: function () {
+            var self = this;
+            //视频会议信息
+            $.ajax({
+                url: '/live/MeetRtc/GetMeetingGroupMember?id=' + self.conferenceId + '&uid=' + self.uid,
+                dataType: "json",   //返回格式为json
+                type: "get",   //请求方式
+                success: function (result) {
+                    if (result.Success) {
+                        self.totalCount = result.Content.length;
+                        self.members = result.Content.slice(0);
+
+                        self.members.forEach(function (item) {
+                            if (self.uid == item.userId) {
+                                self.isAdmin = item.isAdmin;
+                            }
+                            if(item.isAdmin){
+                                self.creator=item.userId;
+                            }
+                        });
+
+
+                        if(result.Message){
+                            //群组成员                            
+                            //初始化janus
+                            CreateJanus();
+                            if (self.isLive == 1)//如果是直播模式
+                                self.GetAudienceMembers();  
+                        }else{
+                            //观众成员
+                            //根据会议的属性【是否直播】去判断该用户是否可以观看
+                            if (self.isLive == 1) {
+                                //直播模式
+                                self.isAudience = true;
+                                self.GetAudienceMembers();
+                            } else {
+                            setTimeout(function () {
+                                    CloseWindow();
+                                }, 3000);
+                                alert('您暂无权限访问该视频会议！');
+                            }
+                        }
+                    }
+                },
+            });
+         },
+
+
+         //请求观众成员
+         GetAudienceMembers: function () {
+            var self = this;
+            $.ajax({
+                url: '/live/MeetRtc/GetConferenceAudienceMember?id=' + self.conferenceId + '&uid=' + self.uid,
+                dataType: "json",   //返回格式为json
+                type: "get",   //请求方式
+                success: function (result) {
+                    if (result.Success) {
+                        self.audienceMember = result.Content.slice(0);
+                        if (self.isAudience) {
+                            //初始化janus
+                            CreateJanus();
+                            //利用filter函数，判断自己是否是新的观众，如果不在这个列表中，还要发通知，通知其他用户，我这个新的观众上线
+                            var audience = self.audienceMember.filter(function (n) {
+                                return n.userId == self.uid;
+                            });
+                            if (audience != null && audience.length == 1) {
+                                //已经是观众，不用再调用Post
+                            } else {
+                                var formData = new FormData(); //FormData构造器接收的是一个form的DOM对象
+                                formData.append('id', self.conferenceId);
+                                formData.append('uid', self.uid);
+                                formData.append('trueName', self.trueName);
+                                self.$http.post('live/MeetRtc/CreateAudience', formData, { emulateJson: true }).then(
+                                    result => {
+                                    if (result.data.Success) {
+                                        self.audienceMember.push(result.data.Content);
+                                        // 7 表示新的观众用户
+
+                                        var content = JSON.stringify({ "type": 7, "content": result.data.Content });
+                                        sendData(content);
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }
+            });
+          },
+
+        //修改平铺/主持人模式
+         resharpElement: function () {
+           if(!this.screenModel) {               
+                this.resharpElementOverlay();
+            }
+         },
+         //平铺模式
+         resharpElementOverlay: function () {
+            var wh = GetFocusedWidthHeight();
+                $.each($("#videos-container").children("div"), function (index, element) {
+                    element.style.width = wh.width + 'px';
+                    element.style.height = wh.height + 'px';
+                    $(element.querySelector("video")).height("100%");
+                });
+         },
+
+
+      },
+
+   });
+
+
+</script>

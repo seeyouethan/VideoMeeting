@@ -22,8 +22,9 @@
       <!-- 顶部 -->
       <el-header class="vh-top clearfix">
           <h1 class="float-l">@(ViewBag.Title+"的视频会议")</h1>
+
          <div class="float-r">
-            <span>
+            
                <el-tooltip content="分享摄像头" placement="top">
                   <i class="bg-icon iconfont icon-sxt" v-show="hasCamera"
                      v-on:click="ChangeVideoSource('camera')"></i>
@@ -182,16 +183,19 @@
           </div>
           <div class="video-con">
               <div class="vc-top">
-                  <div class="clearfix lihe-norm" v-if="!(isAdmin || isAudience)">
+                  
+
+
+                  <!-- 视频窗口 -->
+                  <el-scrollbar class="vm-con clearfix">
+
+                     <div class="clearfix lihe-norm" v-if="!(isAdmin || isAudience)">
                       <div class="float-l tab-group-v">
                           <button class="btn-blue change-btn" v-on:click="ApplyForSpeech" v-cloak>{{applyText}}</button>
                       </div>
                       <p v-if="!isChrome" style="line-height:30px;margin-left:100px;">建议使用Chrome浏览器</p>
                   </div>
 
-
-                  <!-- 视频窗口 -->
-                  <el-scrollbar class="vm-con clearfix">
                       <div class="vct-top" id="videos-container"></div>
                   </el-scrollbar>
               </div>
@@ -285,6 +289,7 @@
       el: '#app',
       data: function () {
          return {
+            
             initialize: false,//默认初始化是没完成的
             isChrome: false,//是否是Chrome浏览器
             applyingResult: false,//申请发言的结果
