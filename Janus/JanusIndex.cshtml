@@ -22,59 +22,80 @@
         <!-- 顶部 -->
         <el-header class="vh-top clearfix">
             <h1 class="float-l">@(ViewBag.Title + "的视频会议")</h1>
-            <div class="float-r">
-                <span v-show="isLive==1">
-                    <el-popover placement="left" width="320" v-model="visibleQRCode">
-                        <p>请扫描下方二维码，进入视频会议</p>
-                        <div style="width: 320px;height: 320px;" id="QRCode">
+            <div class="float-r" v-cloak>
 
-                        </div>
-                        <el-tooltip slot="reference" content="分享二维码" placement="top">
-                            <i class="bg-icon iconfont icon-shareP"></i>
-                        </el-tooltip>
-                    </el-popover>
-                </span>
-                <span>
-                    <el-tooltip content="分享摄像头" placement="top">
-                        <i class="bg-icon iconfont icon-sxt" v-show="hasCamera"
-                           v-on:click="ChangeVideoSource('camera')"></i>
-                    </el-tooltip>
-                </span>
-                <span>
-                    <el-tooltip content="共享屏幕" placement="top">
-                        <i class="bg-icon iconfont icon-pm" v-bind:class="" v-on:click="ChangeVideoSource('desktop')"></i>
-                    </el-tooltip>
-                </span>
-                <span>
-                    <el-tooltip content="设置" placement="top">
-                        <i class="bg-icon iconfont icon-set" v-on:click="ShowSettingDialog"></i>
-                    </el-tooltip>
-                </span>
-                <span>
-                    <el-tooltip v-bind:content="resharpMessage" placement="top">
-                        <i class="bg-icon iconfont" v-bind:class="isFocused?'icon-wg':'icon-zcr'"
-                           v-on:click="resharpElement()"></i>
-                    </el-tooltip>
-                </span>
-                <span>
-                    <el-tooltip content="协同研讨" placement="top">
-                        <i class="bg-icon iconfont icon-discuss" v-on:click="OpenOrCreateDiscuss()"></i>
-                    </el-tooltip>
-                </span>
-                <span>
-                    <el-tooltip v-bind:content="screenModel?'电脑模式':'大屏模式'" placement="top">
-                        <i class="bg-icon iconfont" v-bind:class="screenModel?'icon-dpc':'icon-pc'"
-                           v-on:click="screenModel=!screenModel"></i>
-                    </el-tooltip>
-                </span>
-                <span>
-                    <el-tooltip content="全屏" placement="top">
-                        <i class="bg-icon iconfont"
-                           v-bind:class="{ 'icon-fullScreen': !isFullScreen,'icon-exitFullSrceen': isFullScreen }"
-                           v-on:click="FullScreen"></i>
-                    </el-tooltip>
-                </span>
-            </div>
+            <span>
+               <el-dropdown trigger="hover" v-bind:show-timeout=100 @@command="liveTypeHandleCommand">
+                  <el-tooltip content="发言" placement="top">
+                     <span class="el-dropdown-link">
+                        <i class="bg-icon iconfont icon-sxt"
+                           v-bind:class="liveType=='camera' ? 'icon-sxt':(liveType=='desktop'?'icon-pm':'icon-yy')"></i>
+                     </span>
+                  </el-tooltip>
+                  <el-dropdown-menu slot="dropdown">
+                     <el-dropdown-item v-show="hasCamera" command='camera'>
+                        <i class="bg-icon iconfont icon-sxt"></i>打开摄像头
+                     </el-dropdown-item>
+                     <el-dropdown-item command='desktop'>
+                        <i class="bg-icon iconfont icon-pm"></i>分享屏幕
+                     </el-dropdown-item>
+                     <el-dropdown-item command='audio' v-if="false">
+                        <i class="bg-icon iconfont icon-yy"></i>语音
+                     </el-dropdown-item>
+                  </el-dropdown-menu>
+               </el-dropdown>
+            </span>
+            <span>
+               <el-tooltip content="协同研讨" placement="top">
+                  <i class="bg-icon iconfont icon-discuss" v-on:click="OpenOrCreateDiscuss()"></i>
+               </el-tooltip>
+            </span>
+
+            <span>
+               <el-dropdown trigger="hover" v-bind:show-timeout=100 @@command="overLayoutHandleCommand">
+                  <el-tooltip content="布局" placement="top">
+                     <span class="el-dropdown-link">
+                        <i class="bg-icon iconfont icon-tag"></i>
+                     </span>
+                  </el-tooltip>
+                  <el-dropdown-menu slot="dropdown">
+                     <el-dropdown-item command='zcr'>
+                        <i class="bg-icon iconfont icon-zcr"></i>主持人
+                     </el-dropdown-item>
+                     <el-dropdown-item command='overlay'>
+                        <i class="bg-icon iconfont icon-wg"></i>平铺
+                     </el-dropdown-item>
+                     <el-dropdown-item command='screenModel'>
+                        <i class="bg-icon iconfont icon-pc"></i>大屏
+                     </el-dropdown-item>
+                     <el-dropdown-item command='fullScreen'>
+                        <i class="bg-icon iconfont icon-isFullScreen"
+                           v-bind:class="{ 'icon-fullScreen': !isFullScreen,'icon-exitFullSrceen': isFullScreen }"></i>全屏
+                     </el-dropdown-item>
+                  </el-dropdown-menu>
+               </el-dropdown>
+            </span>
+
+
+
+            <span>
+               <el-tooltip content="设置" placement="top">
+                  <i class="bg-icon iconfont icon-set" v-on:click="ShowSettingDialog"></i>
+               </el-tooltip>
+            </span>
+
+            <span v-if="isLive==1">
+               <el-popover placement="left" width="320" v-model="visibleQRCode">
+                  <p>请扫描下方二维码，进入视频会议</p>
+                  <div style="width: 320px;height: 320px;" id="QRCode">
+
+                  </div>
+                  <el-tooltip slot="reference" content="分享二维码" placement="top">
+                     <i class="bg-icon iconfont icon-share1"></i>
+                  </el-tooltip>
+               </el-popover>
+            </span>
+         </div>
         </el-header>
         <!-- 主体内容 -->
         <el-main class="v-main" id="appMain">
@@ -196,7 +217,7 @@
                     <!-- 视频窗口 -->
                     <el-scrollbar class="vm-con clearfix">
 
-                    <div class="clearfix lihe-norm" v-if="!(isAdmin && isAudience)">
+                    <div class="clearfix lihe-norm" v-if="(!isAdmin && !isAudience)">
                         <div class="float-l tab-group-v">
                             <button class="btn-blue change-btn" v-on:click="ApplyForSpeech" v-cloak>{{applyText}}</button>
                         </div>
@@ -388,7 +409,7 @@
             self.applyingResult = true;
          }
 
-           window.CreateJanus = function () {
+           window.CreateJanus = function (cb) {
                Janus.init({
                    debug: "all",
                    callback: function () {
@@ -466,9 +487,9 @@
                                                                var video = list[f]["video_codec"];
                                                                newRemoteFeed(id, display, audio, video);
                                                                UserOnline(display);
-
-
                                                            }
+                                                           
+                                                            if(cb) cb();
                                                        }
                                                    } else if (event === "destroyed") {
                                                        // The room has been destroyed
@@ -1077,7 +1098,7 @@
                         if (!ele.find(".tab-status").hasClass("in")) {
                             ele.find(".tab-status").addClass("in");
                             ele.fadeOut(10).fadeIn(100);
-                            $(ele).insertAfter($(".audience-ul").find("li").eq(0))
+                            $(ele).insertBefore($(".audience-ul").find("li").eq(0))
                             self.onlineCount_Audience++;
                         }
                     }
@@ -1245,7 +1266,7 @@
           //用户收到其他新的观众进入房间
          window.GetNewAudience = function (data) {
              var audience = self.audienceMember.filter(function (n) {
-                 return n.userId == data.uid;
+                 return n.userId == data.userId;
              });
              if (audience != null && audience.length == 1) {
                  //已经是观众，不用再调用添加
@@ -1253,13 +1274,16 @@
              }
              else {
                  self.audienceMember.unshift(data);
-                 var ele = $(".audience-ul li[data-uid='" + data.uid + "']");
+                 self.$nextTick(function () {
+                  var ele = $(".audience-ul li[data-uid='" + data.userId + "']");
                  if (ele.length !== 0) {
                     if (!ele.find(".tab-status").hasClass("in")) {
                         ele.find(".tab-status").addClass("in");
                         self.onlineCount_Audience++;
                     }
-                }
+                }  
+               })
+                 
              }
           }
 
@@ -1327,6 +1351,28 @@
          }
       },
        methods: {
+            //发言下拉列表
+            liveTypeHandleCommand: function (command) {
+                this.ChangeVideoSource(command);
+            },
+            //布局下拉列表
+            overLayoutHandleCommand: function (command) {
+                if (command == "zcr") {
+                this.screenModel = false;
+                this.resharpElementFocus();
+                }
+                else if (command == "overlay") {
+                this.screenModel = false;
+                this.resharpElementOverlay();
+                } else if (command == "screenModel") {
+                this.screenModel = true;
+                this.resharpElementOverlay();
+
+                } else if (command == 'fullScreen') {
+                this.screenModel = false;
+                this.FullScreen();
+                }
+            },
            //申请发言
            ApplyForSpeech: function () {
                if (!this.isOnLive) {
@@ -1717,29 +1763,39 @@
                         self.audienceMember = result.Content.slice(0);
                         if (self.isAudience) {
                             //初始化janus
-                            CreateJanus();
-                            //利用filter函数，判断自己是否是新的观众，如果不在这个列表中，还要发通知，通知其他用户，我这个新的观众上线
-                            var audience = self.audienceMember.filter(function (n) {
-                                return n.userId == self.uid;
+                            CreateJanus(function(){
+                               //之所以加这个回调是因为，下面的send方法，要在janus建立成功后才可以
+                              //利用filter函数，判断自己是否是新的观众，如果不在这个列表中，还要发通知，通知其他用户，我这个新的观众上线
+                              var audience = self.audienceMember.filter(function (n) {
+                                 return n.userId == self.uid;
+                              });
+                              if (audience != null && audience.length == 1) {
+                                 //已经是观众，不用再调用Post
+                              } else {
+                                 var formData = new FormData(); //FormData构造器接收的是一个form的DOM对象
+                                 formData.append('id', self.conferenceId);
+                                 formData.append('uid', self.uid);
+                                 formData.append('trueName', self.trueName);
+                                 self.$http.post('live/MeetRtc/CreateAudience', formData, { emulateJson: true }).then(
+                                       result => {
+                                       if (result.data.Success) {
+                                          self.audienceMember.push(result.data.Content);
+                                          
+                                          // 7 表示新的观众用户
+                                          var content = JSON.stringify({ "type": 7, "content": result.data.Content });
+                                          //这里其是还是是有一个bug,目前先使用延时5s的方法
+                                          //如果直接调用send方法的话，有的用户可能会收不到
+                                          //正确的方法应该是在其他用户监听到我进入房间后，就把我的信息初始化过去
+                                          setTimeout(function(){
+                                          sendData(content);     },5000);
+                                          self.$nextTick(function () {
+                                             UserOnline(self.uid);   
+                                          })   
+                                       }
+                                 });
+                              }
                             });
-                            if (audience != null && audience.length == 1) {
-                                //已经是观众，不用再调用Post
-                            } else {
-                                var formData = new FormData(); //FormData构造器接收的是一个form的DOM对象
-                                formData.append('id', self.conferenceId);
-                                formData.append('uid', self.uid);
-                                formData.append('trueName', self.trueName);
-                                self.$http.post('live/MeetRtc/CreateAudience', formData, { emulateJson: true }).then(
-                                    result => {
-                                    if (result.data.Success) {
-                                        self.audienceMember.push(result.data.Content);
-                                        // 7 表示新的观众用户
-
-                                        var content = JSON.stringify({ "type": 7, "content": result.data.Content });
-                                        sendData(content);
-                                    }
-                                });
-                            }
+                            
                         }
                     }
                 }

@@ -6,6 +6,20 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "38224",
+      "name": "分享",
+      "font_class": "share1",
+      "unicode": "e613",
+      "unicode_decimal": 58899
+    },
+    {
+      "icon_id": "165995",
+      "name": "错误",
+      "font_class": "no",
+      "unicode": "e687",
+      "unicode_decimal": 59015
+    },
+    {
       "icon_id": "332342",
       "name": "更多",
       "font_class": "more",
@@ -74,6 +88,13 @@
       "font_class": "searchBtn",
       "unicode": "e659",
       "unicode_decimal": 58969
+    },
+    {
+      "icon_id": "1526328",
+      "name": "选择",
+      "font_class": "yes",
+      "unicode": "e68c",
+      "unicode_decimal": 59020
     },
     {
       "icon_id": "1671449",
@@ -377,6 +398,13 @@
       "unicode_decimal": 59151
     },
     {
+      "icon_id": "6446007",
+      "name": "聊天",
+      "font_class": "discuss",
+      "unicode": "e62a",
+      "unicode_decimal": 58922
+    },
+    {
       "icon_id": "6490927",
       "name": "icon_禁止语音-面性",
       "font_class": "yyG",
@@ -403,13 +431,6 @@
       "font_class": "viImgf",
       "unicode": "e710",
       "unicode_decimal": 59152
-    },
-    {
-      "icon_id": "9004296",
-      "name": "讨论",
-      "font_class": "discuss",
-      "unicode": "e6e6",
-      "unicode_decimal": 59110
     },
     {
       "icon_id": "9304653",

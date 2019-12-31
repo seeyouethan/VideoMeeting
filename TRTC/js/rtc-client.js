@@ -24,7 +24,7 @@ class RtcClient {
 
   async join() {
     if (this.isJoined_) {
-      Toast.notify('您已进入视频会议房间！');
+      //Toast.notify('您已进入视频会议房间！');
       return;
     }
 
@@ -41,7 +41,7 @@ class RtcClient {
     try {
       // join the room
       await this.client_.join({ roomId: this.roomId_ });
-      Toast.notify('加入视频会议成功！');
+      //Toast.notify('加入视频会议成功！');
       this.isJoined_ = true;
     } catch (error) {
       alert("加入视频会议失败，请刷新浏览器重新加入！");
@@ -62,7 +62,7 @@ class RtcClient {
     try {
       // leave the room
       await this.client_.leave();
-      Toast.notify('离开视频会议房间成功！');
+      //Toast.notify('离开视频会议房间成功！');
       this.isJoined_ = false;
     } catch (error) {
       Toast.error("离开视频会议房间失败！" + error);
@@ -100,7 +100,7 @@ class RtcClient {
         video_profile = profile;
       }
       await this.createLocalStream(camera_config, video_profile);
-      Toast.info('摄像头及麦克风采集成功！');
+      //Toast.info('摄像头及麦克风采集成功！');
     } catch (error) {
       alert(
         "无法获取麦克风/摄像头/分享桌面权限，请确认已经连接麦克风/摄像头并授予其访问权限，然后刷新浏览器"
@@ -159,7 +159,7 @@ class RtcClient {
       this.localStream_.play(uid);
       // 发布本地流
       await this.client_.publish(this.localStream_);
-      Toast.info('发布本地流成功！');
+      //Toast.info('发布本地流成功！');
       this.isPublished_ = true;
       //在数据库中添加缓存，表示当前用户正在直播
       //SetOnLiveUser(uid);
@@ -182,7 +182,7 @@ class RtcClient {
       }, 3000);
     } catch (error) {
       console.error("failed to publish local stream " + error);
-      Toast.error('发布本地流失败！');
+      //Toast.error('发布本地流失败！');
       this.isPublished_ = false;
       
       RemovePlayerElement(selfRtc.localStream_.getUserId());
@@ -207,7 +207,7 @@ class RtcClient {
       //去掉video以及相关标签
       var uid = this.localStream_.getUserId();
       RemovePlayerElement(uid);
-      Toast.info('停止发布本地流成功！');
+      //Toast.info('停止发布本地流成功！');
       //RemoveOnLiveUser(uid);
     } catch (error) {
       console.error("failed to unpublish local stream because " + error);
@@ -263,13 +263,13 @@ class RtcClient {
     this.client_.on("peer-join", evt => {
       const userId = evt.userId;
       console.log("peer-join " + userId);
-      Toast.notify('远端用户加入视频会议 - ' + userId);
+      //Toast.notify('远端用户加入视频会议 - ' + userId);
     });
     // 远端用户退房通知 - 仅限主动推流用户
     this.client_.on("peer-leave", evt => {
       const userId = evt.userId;
       console.log("peer-leave " + userId);
-      Toast.notify('远端用户离开视频会议 - ' + userId);
+      //Toast.notify('远端用户离开视频会议 - ' + userId);
       //RemoveOnLiveUser(userId);
     });
 

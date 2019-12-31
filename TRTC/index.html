@@ -17,7 +17,68 @@
       <!-- 顶部 -->
       <el-header class="vh-top clearfix">
          <h1 class="float-l">TRTC本地测试Demo01</h1>
-         <div class="float-r">
+         <div class="float-r" v-cloak>
+
+            <span>
+               <el-dropdown trigger="hover" v-bind:show-timeout=100 @command="liveTypeHandleCommand">
+                  <el-tooltip content="发言" placement="top">
+                     <span class="el-dropdown-link">
+                        <i class="bg-icon iconfont icon-sxt"
+                           v-bind:class="liveType=='camera' ? 'icon-sxt':(liveType=='desktop'?'icon-pm':'icon-yy')"></i>
+                     </span>
+                  </el-tooltip>
+                  <el-dropdown-menu slot="dropdown">
+                     <el-dropdown-item v-show="hasCamera" command='camera'>
+                        <i class="bg-icon iconfont icon-sxt"></i>打开摄像头
+                     </el-dropdown-item>
+                     <el-dropdown-item command='desktop'>
+                        <i class="bg-icon iconfont icon-pm"></i>分享屏幕
+                     </el-dropdown-item>
+                     <el-dropdown-item command='audio' v-if="false">
+                        <i class="bg-icon iconfont icon-yy"></i>语音
+                     </el-dropdown-item>
+                  </el-dropdown-menu>
+               </el-dropdown>
+            </span>
+            <span>
+               <el-tooltip content="协同研讨" placement="top">
+                  <i class="bg-icon iconfont icon-discuss" v-on:click="OpenOrCreateDiscuss()"></i>
+               </el-tooltip>
+            </span>
+
+            <span>
+               <el-dropdown trigger="hover" v-bind:show-timeout=100 @command="overLayoutHandleCommand">
+                  <el-tooltip content="布局" placement="top">
+                     <span class="el-dropdown-link">
+                        <i class="bg-icon iconfont icon-tag"></i>
+                     </span>
+                  </el-tooltip>
+                  <el-dropdown-menu slot="dropdown">
+                     <el-dropdown-item command='zcr'>
+                        <i class="bg-icon iconfont icon-zcr"></i>主持人
+                     </el-dropdown-item>
+                     <el-dropdown-item command='overlay'>
+                        <i class="bg-icon iconfont icon-wg"></i>平铺
+                     </el-dropdown-item>
+                     <el-dropdown-item command='screenModel'>
+                        <i class="bg-icon iconfont icon-pc"></i>大屏
+                     </el-dropdown-item>
+                     <el-dropdown-item command='fullScreen'>
+                        <i class="bg-icon iconfont icon-isFullScreen"
+                           v-bind:class="{ 'icon-fullScreen': !isFullScreen,'icon-exitFullSrceen': isFullScreen }"></i>全屏
+                     </el-dropdown-item>
+                  </el-dropdown-menu>
+               </el-dropdown>
+            </span>
+
+
+
+            <span>
+               <el-tooltip content="设置" placement="top">
+                  <i class="bg-icon iconfont icon-set" v-on:click="ShowSettingDialog"></i>
+               </el-tooltip>
+            </span>
+
             <span>
                <el-popover placement="left" width="320" v-model="visibleQRCode">
                   <p>请扫描下方二维码，进入视频会议</p>
@@ -25,51 +86,33 @@
 
                   </div>
                   <el-tooltip slot="reference" content="分享二维码" placement="top">
-                     <i class="bg-icon iconfont icon-shareP"></i>
+                     <i class="bg-icon iconfont icon-share1"></i>
                   </el-tooltip>
                </el-popover>
             </span>
+
+            <!-- 
+
             <span>
-               <span>
-                  <el-tooltip content="分享摄像头" placement="top">
-                     <i class="bg-icon iconfont icon-sxt" v-bind:class="" v-show="hasCamera"
-                        v-on:click="ChangeVideoSource('camera')"></i>
-                  </el-tooltip>
-               </span>
-               <span>
-                  <el-tooltip content="共享屏幕" placement="top">
-                     <i class="bg-icon iconfont icon-pm" v-bind:class="" v-on:click="ChangeVideoSource('desktop')"></i>
-                  </el-tooltip>
-               </span>
-               <span>
-                  <el-tooltip content="设置" placement="top">
-                     <i class="bg-icon iconfont icon-set" v-on:click="ShowSettingDialog"></i>
-                  </el-tooltip>
-               </span>
-               <span>
-                  <el-tooltip v-bind:content="resharpMessage" placement="top">
-                     <i class="bg-icon iconfont" v-bind:class="isFocused?'icon-wg':'icon-zcr'"
-                        v-on:click="resharpElement()"></i>
-                  </el-tooltip>
-               </span>
-               <span>
-                  <el-tooltip content="协同研讨" placement="top">
-                     <i class="bg-icon iconfont icon-discuss" v-on:click="OpenOrCreateDiscuss()"></i>
-                  </el-tooltip>
-               </span>
-               <span>
-                  <el-tooltip v-bind:content="screenModel?'电脑模式':'大屏模式'" placement="top">
-                     <i class="bg-icon iconfont" v-bind:class="screenModel?'icon-dpc':'icon-pc'"
-                        v-on:click="screenModel=!screenModel"></i>
-                  </el-tooltip>
-               </span>
-               <span>
-                  <el-tooltip content="全屏" placement="top">
-                     <i class="bg-icon iconfont"
-                        v-bind:class="{ 'icon-fullScreen': !isFullScreen,'icon-exitFullSrceen': isFullScreen }"
-                        v-on:click="FullScreen"></i>
-                  </el-tooltip>
-               </span>
+               <el-tooltip v-bind:content="resharpMessage" placement="top">
+                  <i class="bg-icon iconfont" v-bind:class="isFocused?'icon-wg':'icon-zcr'"
+                     v-on:click="resharpElement()"></i>
+               </el-tooltip>
+            </span>
+
+            <span>
+               <el-tooltip v-bind:content="screenModel?'电脑模式':'大屏模式'" placement="top">
+                  <i class="bg-icon iconfont" v-bind:class="fullScreen?'icon-dpc':'icon-pc'"
+                     v-on:click="screenModel=!screenModel"></i>
+               </el-tooltip>
+            </span>
+            <span>
+               <el-tooltip content="全屏" placement="top">
+                  <i class="bg-icon iconfont"
+                     v-bind:class="{ 'icon-fullScreen': !isFullScreen,'icon-exitFullSrceen': isFullScreen }"
+                     v-on:click="FullScreen"></i>
+               </el-tooltip>
+            </span> -->
          </div>
       </el-header>
       <!-- 主体内容 -->
@@ -690,6 +733,28 @@
          rtc.join();
       },
       methods: {
+         //发言下拉列表
+         liveTypeHandleCommand: function (command) {
+            this.ChangeVideoSource(command);
+         },
+         //布局下拉列表
+         overLayoutHandleCommand: function (command) {
+            if (command == "zcr") {
+               this.screenModel = false;
+               this.resharpElementFocus();
+            }
+            else if (command == "overlay") {
+               this.screenModel = false;
+               this.resharpElementOverlay();
+            } else if (command == "screenModel") {
+               this.screenModel = true;
+               this.resharpElementOverlay();
+
+            } else if (command == 'fullScreen') {
+               this.screenModel = false;
+               this.FullScreen();
+            }
+         },
          //申请发言
          ApplyForSpeech: function () {
             if (rtc.isPublished_) {
@@ -932,6 +997,7 @@
                self.isOnLive = true;
                //设置为平铺
                self.resharpElementOverlay();
+               self.liveType = 'camera';
             } else {
                //普通用户
                if (self.applyingResult || self.isOnLive) {
@@ -953,10 +1019,10 @@
                   rtc.localStream_.setVideoProfile('1080p');
                   navigator.mediaDevices.getDisplayMedia({ video: true }).then(stream => {
                      const videoTrack = stream.getVideoTracks()[0];
-                     rtc.localStream_.replaceTrack(videoTrack);
+                     rtc.localStream_.replaceTrack(videoTrack); self.liveType = 'desktop';
                   });
                } else {
-                  rtc.publishScreen();
+                  rtc.publishScreen(); self.liveType = 'desktop';
                }
                //测试发现部分用户在切换到桌面分享的时候，无法切换成功，所以这里修改成为直接分享桌面，在publishScreen方法中，会自动把已经分享的摄像头流给停掉(待进一步测试)
                //但是在rtc.isPublished_为true的时候，直接执行publishScreen会有一个黑框
@@ -1226,6 +1292,7 @@
 
          //修改视频源
          ChangeVideoSource: function (command) {
+            console.log(command);
             //挂断
             if (command === "none") {
                if (this.isOnLive) {

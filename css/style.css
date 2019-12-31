@@ -1077,6 +1077,7 @@ body {
 }
 
 .main-tab .el-popover__reference,.main-tab .el-popover__reference img{width:3.875rem;height:3.875rem}
+.main-tab .bg-icon{width:30px;height:30px}
 
 
 .main-tab .v-main{padding-top:20px;display:flex;flex-direction:row}
@@ -1167,3 +1168,8 @@ body {
 .full-videolist .vctb-item{float:none;margin-right:0}
 /*.full-videolist .vct-top video{height:calc(100vh - 60px)}
 .full-videolist .vct-bot video{height:calc(33.33vh - 30px)}*/
+.el-dropdown-menu__item .bg-icon{
+  margin-right: 4px;
+}.el-popper[x-placement^=bottom] {
+  margin-top: -6px;
+}
