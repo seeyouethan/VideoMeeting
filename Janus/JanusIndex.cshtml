@@ -252,7 +252,6 @@
                 </el-form-item>
                 <el-form-item label="摄像头分辨率：">
                     <el-select v-model="value_reso">
-                        <el-option label="1080p" value="0">1080p</el-option>
                         <el-option label="720p" value="1">720p</el-option>
                         <el-option label="480p" value="2">480p</el-option>
                         <el-option label="360p" value="3">360p</el-option>
@@ -287,7 +286,9 @@
 <script type="text/javascript" src="~/Content/VideoMeeting/Janus/js/adapter.js"></script>
 <script type="text/javascript" src="~/Content/VideoMeeting/Janus/js/janus.js"></script>
 <script type="text/javascript" src="~/Content/VideoMeeting/Janus/js/janus-common.js"></script>
-<script src="~/Content/VideoMeeting/js/vue-infinite-loading.js"></script>
+<script type="text/javascript" src="~/Content/VideoMeeting/js/vue-infinite-loading.js"></script>
+<!-- 引入cookie组件库 -->
+<script type="text/javascript" src="~/Content/VideoMeeting/Janus/js/jquery.cookie.js"></script>
 
 
 
@@ -405,8 +406,10 @@
             }
             //允许发言后，重新打开界面，加个参数 isOnLive=1
          if (getUrlKey("isOnLive") == 1 || getUrlKey("isOnLive") == "1") {
-            self.isOnLive = true;
-            self.applyingResult = true;
+            if($.cookie('living') == 1 || $.cookie('living') == '1'){
+               self.isOnLive = true;
+               self.applyingResult = true;
+            }
          }
 
            window.CreateJanus = function (cb) {
@@ -963,6 +966,7 @@
 
 
            window.unpublishOwnFeed = function () {
+               $.removeCookie('living');
                self.applying = false;
                self.applyingResult = false;
                self.applyText = "申请发言";
@@ -1210,6 +1214,7 @@
             }
             if (uid == self.uid) {
                if (getUrlKey("isOnLive") == 1 || getUrlKey("isOnLive") == "1") {
+                  $.cookie('living','1');
                   self.applying = false;
                   self.applyingResult = true;
                   self.applyText = "正在发言";
@@ -1220,7 +1225,10 @@
                      publishOwnFeed('desktop');
                   }
                } else {
-                  window.location = location.href + "&isOnLive=1";
+                  $.cookie('living','1');
+                  setTimeout(function(){                     
+                     window.location = location.href + "&isOnLive=1";
+                  },1000)
                }
             }
          }
@@ -1236,6 +1244,7 @@
             }
 
             if (uid == self.uid) {
+               $.removeCookie('living');
                self.applying = false;
                self.applyingResult = false;
                self.applyText = "申请发言";
@@ -1254,6 +1263,7 @@
          window.GetStopSpeech = function (uid) {
             SetIsSpeaking(uid,false);
             if (uid == self.uid) {
+               $.removeCookie('living');
                self.ChangeVideoSource("none");
                self.$message({
                   showClose: true,
@@ -1384,6 +1394,13 @@
            },
          //同意发言
          AgreeSpeech: function (uid) {
+
+            var OnLiveUserCount = $("#videos-container").children("div").length;
+                if (OnLiveUserCount >= 4) {
+                    this.$message('当前发言人数已达到4人，请先挂断其他用户，然后再允许新用户发言');
+                    return;
+                }
+
             //同意发言
             var content = JSON.stringify({ "type": 4, "content": uid });
             sendData(content);
@@ -1579,11 +1596,12 @@
             var width = 640;
             var height = 480;
 
-            if (self.value_profile == '1080p') {
-               width = 1920;
-               height = 1080;
-            }
-            else if (self.value_profile == '720p') {
+            //if (self.value_profile == '1080p') {
+            //   width = 1920;
+            //   height = 1080;
+            //}
+            //else 
+            if (self.value_profile == '720p') {
                width = 1280;
                height = 720;
             } else if (self.value_profile == '480p') {
@@ -1655,6 +1673,11 @@
                count ? i = i - 1 : void (0);
             }
             return [arr1, arr2]
+         },
+
+         //仅仅使用音频
+         ShowAudio:function(){
+
          },
 
           //切换到摄像头显示/切换摄像头源
@@ -2008,6 +2031,7 @@
          ChangeVideoSource: function (command) {
             //挂断
             if (command === "none") {
+               $.removeCookie('living');
                if (this.isOnLive) {
                   unpublishOwnFeed();
                   this.isOnLive = false;
@@ -2024,6 +2048,10 @@
             //桌面
             if (command === "desktop") {
                this.ShowDesktop();
+            }
+            //语音
+            if(command == "audio"){
+               this.ShowAudio();
             }
          },
 
@@ -2226,10 +2254,11 @@
 
          //摄像头分辨率
          value_reso(val, oldVal) {
-            if (val == "0") {
-               this.value_profile = '1080p';
-            }
-            else if (val == "1") {
+            //if (val == "0") {
+            //   this.value_profile = '1080p';
+            //}
+            //else 
+            if (val == "1") {
                this.value_profile = '720p';
             } else if (val == "2") {
                this.value_profile = '480p';

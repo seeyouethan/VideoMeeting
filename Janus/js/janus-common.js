@@ -120,13 +120,13 @@ function CreatePlayerElement(config) {
 
     if (config.mediaStream) {
         mediaElement.srcObject = mediaStream;
+        //防止暂停
+        mediaElement.addEventListener('pause', function () {
+            //暂停开始执行的函数
+            mediaElement.play();
+        });
     }
 
-    //防止暂停
-    mediaElement.addEventListener('pause', function () {
-        //暂停开始执行的函数
-        mediaElement.play();
-    });
     mediaElement.onclick = function () {
         SetFocus("div_" + uid);
     };
